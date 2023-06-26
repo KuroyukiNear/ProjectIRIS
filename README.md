@@ -1,9 +1,5 @@
-# ProjectIRIS
+# ProjectIRIS v1.0
 
-
-
-
-
-KuroyukiNear
-Iris_#0245
 27 October 2021
+
+Outdated
