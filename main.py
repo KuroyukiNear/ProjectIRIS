@@ -177,7 +177,7 @@ async def ping(interaction):
 
 
 # Connect
-token = "OTAyNzIwNzgyNTAzOTA3MzU4.GQK1w3.2fLlg2PHIbQYu5SqGZBYGUYQBQX-ZiQ3RcuRAo"
+token = "token"
 client.run(token)
 
 
