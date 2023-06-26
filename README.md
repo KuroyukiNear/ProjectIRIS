@@ -1,5 +1,9 @@
-# ProjectIRIS v1.0
+# ProjectIRIS v2
+### Slash Commands Update
 
-27 October 2021
+v2.0.0 - 24 June 2023
 
-Outdated
+
+
+
+<img src="https://github.com/KuroyukiNear/ProjectIRIS/blob/main/logo.png" />
