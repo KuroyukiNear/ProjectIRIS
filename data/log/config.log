@@ -1,4 +1,0 @@
-2023-05-22 21:33:56,416:INFO:discord.client: logging in using static token
-2023-05-22 21:33:56,575:DEBUG:discord.http: GET https://discord.com/api/v7/users/@me with None has returned 401
-2023-05-22 21:33:56,576:INFO:discord.client: Cleaning up tasks.
-2023-05-22 21:33:56,576:INFO:discord.client: Closing the event loop.
