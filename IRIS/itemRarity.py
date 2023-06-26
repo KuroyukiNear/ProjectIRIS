@@ -1,0 +1,13 @@
+UR_info = "***Ultimate Rare***"
+SSR_info = "***Super Super Rare"
+SR_info = "***Super Rare***"
+R_info = "***Rare***"
+UC_info = "***Uncommon***"
+C_info = "***Common***"
+
+UR = "***Ultimate Rare***"
+SSR = "***Super Super Rare"
+SR = "***Super Rare***"
+R = "***Rare***"
+UC = "***Uncommon***"
+C = "***Common***"
