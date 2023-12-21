@@ -1,3 +1,19 @@
+"""
+ ____            _           _     ___ ____  ___ ____  
+|  _ \ _ __ ___ (_) ___  ___| |_  |_ _|  _ \|_ _/ ___| 
+| |_) | '__/ _ \| |/ _ \/ __| __|  | || |_) || |\___ \ 
+|  __/| | | (_) | |  __/ (__| |_   | ||  _ < | | ___) |
+|_|   |_|  \___// |\___|\___|\__| |___|_| \_\___|____/ 
+              |__/                                     
+
+
+When I wrote this code, only God and I knew how it worked.
+Now, only God knows.
+
+Last Update: 22 December 2023
+Version: v2.1.0
+"""
+
 # Discord Modules
 import discord
 from discord import app_commands
