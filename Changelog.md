@@ -30,6 +30,22 @@ No other records are left.
 ### Changes & Fixes
 - Changed edit log message [here] link to the new Discord link button in the embed description.
 - Added both entered choices for preview in the `choice` command.
-
-### Removed
 - Removed [SPECIAL] `傻逼偵測器` command.
+
+## [2.2.0] - 2023-12-22
+
+### Updates
+- Added console log
+- Added a log file
+- Added `Watchlist` (ToDo)
+- Added `Watchlist` user online status (ToDo)
+- Added user count `online/idle/dnd/offline` live message edit (ToDo)
+- Added console colours
+
+###  Changes & Fixes
+- Fixed `Channel Switch Log` bug
+- String in `Banned Words` will not be logged in `Delete Log`
+- Added a timer in `Channel Swtich Log` and `Channel Leave Log`
+- Fixed `Edit Log` link repeat bug
+- Removed `Display Profile` command
+- Used different log embed colours
