@@ -12,8 +12,10 @@ only God and I knew how it worked.
 Now, only God knows.
 
 Last Edited: 07 January 2023
-Version: v2.2.0
+Version: v2.2.1
 """
+
+IRIS_version = "2.2.1"
 
 # Discord Modules
 import discord
@@ -22,6 +24,8 @@ from discord.ext import commands, tasks
 
 # Utility Modules
 import os
+import sys
+import time
 import random
 from pathlib import Path
 from itertools import cycle
@@ -32,6 +36,12 @@ from datetime import datetime
 intents = discord.Intents.all()
 client = commands.AutoShardedBot(command_prefix=".", help_command=None, intents=intents)
 path = os.path.dirname(__file__)
+# Log Settings
+user_join = True
+deleted_message = True
+edited_message = True
+censored_message = True
+voice_events = True
 # Channel ID
 channelID = 1122103608419291236 
 user_join = channelID
@@ -42,12 +52,14 @@ voice_events = channelID
 # User ID
 ownerID = [638342719592202251, 729854914812968991]
 # Iris Responses
-papa = ["hi papa", "hello papa", "ello"]
-user = ["halo~", "hii"]
+papa = ["hi papa", "hello papa", "hola papa"]
+user = ["halo~", "hii", "你好你好你好", "yo", "Bonjour"]
 luby = ["會長早晨！", "hi Luby姐姐"]
-summy = ["小朋友唔好再沉迷BL", "考試喇同學", "hi summy"]
+summy = ["Summy早晨", "hi Summy"]
 # Banned Words
 bannedWords = ["testcode", "testcode2"]
+# Watchlist
+Watchlist = [0]
 # Dictionaries & Lists
 voice_timers = {}
 space = "     "
@@ -64,6 +76,9 @@ def prPurple(skk): print("\033[95m {}\033[00m" .format(skk))
 def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
 def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
 def prBlack(skk): print("\033[98m {}\033[00m" .format(skk))
+
+
+os.system('title ProjectIRIS Central Controller')
 
 
 # Connect
@@ -86,29 +101,31 @@ async def on_ready():
     prYellow(f"[{login_time}] [INFO] Iris has logged in.")
     logfile.write(f"\n[{login_time}] [INFO] Iris has logged in.")
     prRed('<=>--------------------------------<=>')
-    prPurple(f"{space}Logged in as {client.user}")
-    prPurple(f"{space}User ID: {client.user.id}")
-    prPurple(f"{space}Logged in at {login_time}")
-    prPurple(f"{space}Discord Version: {discord.__version__}")
+    prLightGray(f"{space}Logged in as {client.user}")
+    prLightGray(f"{space}User ID: {client.user.id}")
+    prLightGray(f"{space}Logged in at {login_time}")
+    prLightGray(f"{space}Iris Version: {IRIS_version}")
+    prLightGray(f"{space}Discord Version: {discord.__version__}")
+    prLightGray(f"{space}Python Version: {sys.version}")
     prRed('<=>--------------------------------<=>')
 
     server = len(client.guilds)
     server_count = int(server)
 
-    prPurple(f"{space}Connected to")
-    prPurple(f"{space}{server_count} Discord Guilds")
+    prLightGray(f"{space}Connected to")
+    prLightGray(f"{space}{server_count} Discord Guilds")
     prRed('<=>--------------------------------<=>')
     guild_number = 0
     for guild in client.guilds:
       guild_number = guild_number + 1
-      prPurple(f"{space}[{guild_number}] {guild} | ID:{guild.id}")
+      prLightGray(f"{space}[{guild_number}] {guild} | ID:{guild.id} | {guild.owner}")
     prRed('<=>--------------------------------<=>')
     channel = client.get_channel(1193155470186266754)
     message = await channel.fetch_message(1193237727144054865)
     restartTimes = int(message.content) + 1
     await message.edit(content=f"{restartTimes}")
     restimemsg = await channel.fetch_message(1193237749596180480)
-    await restimemsg.edit(content=f"**Last Restart**: {login_time}")
+    await restimemsg.edit(content=f"**Last Restart:**{login_time}\n**Iris Version:** {IRIS_version}\n**Discord Version:** {discord.__version__}\n**Python Version:** {sys.version}")
 
 
 # Bot Status
@@ -307,11 +324,33 @@ async def ping(interaction):
 
 
 # User Status Count
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=10)
 async def usercount():
+    now = datetime.now()
+    refresh_time = now.strftime("%H:%M:%S")
+    # Count members
+    server = client.get_guild(863253117684678658) #學術寶庫
+    online_members = []
+    offline_members = []
+    idle_members = []
+    dnd_members = []
+    for member in server.members:
+        if member.status == discord.Status.online:
+            online_members.append(member.name)
+        if member.status == discord.Status.offline:
+            offline_members.append(member.name)
+        if member.status == discord.Status.idle:
+            idle_members.append(member.name)
+        if member.status == discord.Status.dnd:
+            dnd_members.append(member.name)
+    online = len(online_members)
+    offline = len(offline_members)
+    idle = len(idle_members)
+    dnd = len(dnd_members)
+    # Live Status Message Edit
     channel = client.get_channel(1193155470186266754)
-    message = await channel.fetch_message(1193159545493663834)
-    newmsg = int(message.content) + 1
+    message = await channel.fetch_message(1193484403574325278)
+    newmsg = f"**{server} Member Status**\n**Total Members: {server.member_count}**\n*Refreshes every 10 seconds* **|** *Last Refresh: {refresh_time}*\n:green_circle: {online}\n:orange_circle: {idle}\n:red_circle: {dnd}\n:white_circle: {offline}"
     await message.edit(content=newmsg)
 
 
@@ -358,7 +397,139 @@ async def sync(interaction: discord.Interaction):
         await interaction.response.send_message("Only papa can use this command!")
 
 
+# Developer Info
+# Guild List
+@client.tree.command(name = "guilds", description = "Console Command", guild=discord.Object(id=952892062552981526))
+async def devinfo(ctx: discord.Interaction):
+    if ctx.user.id in ownerID:
+        page = 0
+        # Guilds
+        for i in range(0, len(client.guilds), 9):
+            page = page + 1
+            server_list = discord.Embed(title="Project IRIS Guild List",
+                                        description=f"***Page {page}***",
+                                        colour=discord.Colour.dark_red())
+            guilds = client.guilds[i:i + 9]
+            for guild in guilds:
+                server_list.add_field(
+                    name=guild.name,
+                    value=
+                    f"`{guild.id}` \n ***{guild.member_count} members***")
+            server_list.set_footer(
+                text=f"Developer Info requested by {ctx.user}")
+            await ctx.user.send(embed=server_list)
+        await ctx.response.send_message(
+            f"I'm currently connected to **{len(client.guilds)} servers** <:anime_brighteyes:943480188195442758> More detailed information has been sent to your DMs! <a:UruhaRushia_happy:940254774094364694>")
+    else:
+        await ctx.response.send_message("Only papa can use this command!")
+
+
+# Members
+@client.tree.command(name = "members", description = "Console Command", guild=discord.Object(id=952892062552981526))
+@app_commands.describe(guild = "Enter guild ID.")
+async def devinfo(ctx: discord.Interaction, guild: str):
+    guild_id = int(guild)
+    server = client.get_guild(guild_id)
+    if ctx.user.id in ownerID:
+        page = 0
+
+        for i in range(0, len(server.members), 50):
+            page = page + 1
+            type_bot = 0
+            type_user = 0
+            member_list = discord.Embed(
+                title=f"{server}",
+                description=f"***Page {page} | Guild ID: `{server.id}` ***",
+                colour=discord.Colour.dark_red())
+            members = server.members[i:i + 50]
+            for member in members:
+                if member.bot:
+                    bot = "Bot"
+                    type_bot += 1
+                else:
+                    bot = ""
+                    type_user += 1
+                member_list.add_field(name=f"{member} {bot}",
+                                        value=f"`{member.id}`",
+                                        inline=True)
+            member_list.set_footer(
+                text=f"{type_user} Users | {type_bot} Bots")
+            await ctx.user.send(embed=member_list)
+        await ctx.response.send_message(
+            f"**{server}** currently has **{len(server.members)} members** <:anime_brighteyes:943480188195442758> More detailed information has been sent to your DMs! <a:UruhaRushia_happy:940254774094364694>")
+    else:
+        await ctx.response.send_message("Only papa can use this command!")
+
+
+# Channels
+@client.tree.command(name = "channels", description = "Console Command", guild=discord.Object(id=952892062552981526))
+@app_commands.describe(guild = "Enter guild ID.")
+async def devinfo(ctx: discord.Interaction, guild: str):
+    guild_id = int(guild)
+    server = client.get_guild(guild_id)
+    if ctx.user.id in ownerID:
+        page = 0
+        # Text Channels
+        for i in range(0, len(server.text_channels), 25):
+            page = page + 1
+            text_channel_list = discord.Embed(
+                title=f"{server}",
+                description=
+                f"***Page {page} | Guild ID: `{server.id}` | Text Channels ***",
+                colour=discord.Colour.dark_red())
+            channels = server.text_channels[i:i + 25]
+            for channel in channels:
+                text_channel_list.add_field(name=f"#{channel.name}",
+                                            value=f"`{channel.id}`",
+                                            inline=True)
+            text_channel_list.set_footer(
+                text=f"{len(server.text_channels)} Text Channels",)
+            await ctx.user.send(embed=text_channel_list)
+        # Voice Channels
+        for i in range(0, len(server.voice_channels), 25):
+            page = page + 1
+            voice_channel_list = discord.Embed(
+                title=f"{server}",
+                description=
+                f"***Page {page} | Guild ID: `{server.id}` | Voice Channels ***",
+                colour=discord.Colour.dark_red())
+            channels = server.voice_channels[i:i + 25]
+            for channel in channels:
+                voice_channel_list.add_field(
+                    name=f":speaker:{channel.name}",
+                    value=f"`{channel.id}`",
+                    inline=True)
+            voice_channel_list.set_footer(
+                text=f"{len(server.voice_channels)} voice Channels",)
+            await ctx.user.send(embed=voice_channel_list)
+        await ctx.response.send_message(
+            f"**{server}** currently has **{len(server.text_channels)} text channels** and **{len(server.voice_channels)} voice channels** <:anime_brighteyes:943480188195442758> More detailed information has been sent to your DMs! <a:UruhaRushia_happy:940254774094364694>")
+    else:
+        await ctx.response.send_message("***Error*** You can't use that command.")
+
+# Clear DM
+@client.tree.command(name = "cls", description = "Clears your DM", guild=discord.Object(id=952892062552981526))
+async def cls(ctx: discord.Interaction):
+    await ctx.response.send_message("This might take a while.")
+    remove = 9999999999999999999999999999999999999999
+    remove = remove * remove * remove
+    async for message in ctx.user.history(limit=remove):
+        remove = remove + 1
+        if message.author.id == client.user.id:
+            await message.delete()
+            time.sleep(0.5)
+    await ctx.channel.send("All messages in the DM has been deleted.")
+
+
+
 
 # Connect
 token = "token"
 client.run(token)
+
+'''
+<-> DEV LOG <->
+11 JAN 2024
+Started writing a dev log. Simply to let future me know that
+I will probably be having mental breakdowns while writing this code.
+'''
