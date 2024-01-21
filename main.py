@@ -30,6 +30,7 @@ import random
 from pathlib import Path
 from itertools import cycle
 from datetime import datetime
+from dotenv import load_dotenv
 
 
 # Client Settings
@@ -524,7 +525,8 @@ async def cls(ctx: discord.Interaction):
 
 
 # Connect
-token = "token"
+load_dotenv()
+token = os.getenv('TOKEN')
 client.run(token)
 
 '''
@@ -532,4 +534,11 @@ client.run(token)
 11 JAN 2024
 Started writing a dev log. Simply to let future me know that
 I will probably be having mental breakdowns while writing this code.
+
+21 JAN 2024
+Copied the old devinfo function but discord.py has updated a lot
+these few years so I spent some time debugging old code. Ugh.
+I decided to stop versioning and use Source Control to commit all
+changes to keep track of the updates. And I get more GitHub commit
+histories. Win-Win situation I guess.
 '''
