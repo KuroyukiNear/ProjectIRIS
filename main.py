@@ -50,6 +50,7 @@ deleted_message = channelID
 edited_message = channelID
 censored_message = channelID
 voice_events = channelID
+watched_message = 1198955918742802563
 # User ID
 ownerID = [638342719592202251, 729854914812968991]
 # Iris Responses
@@ -57,8 +58,8 @@ papa = ["hi papa", "hello papa", "hola papa"]
 user = ["halo~", "hii", "你好你好你好", "yo", "Bonjour"]
 luby = ["會長早晨！", "hi Luby姐姐"]
 summy = ["Summy早晨", "hi Summy"]
-# Banned Words
-bannedWords = ["testcode", "testcode2"]
+# Watched Words
+watchedWords = ["testcode", "testcode2"]
 # Watchlist
 Watchlist = [0]
 # Dictionaries & Lists
@@ -141,9 +142,6 @@ async def change_status():
 # Deleted Message Log
 @client.event
 async def on_message_delete(message: str):
-  if message in bannedWords:
-    return
-  else:
     user = message.author
     channel = message.channel
     embed = discord.Embed(title=f"{user} deleted a message in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
@@ -196,14 +194,19 @@ async def on_message(message):
     if message.author.id == client.user.id:
         return
     
-    # Banned Words
-    if any(word in message.content for word in bannedWords):
-        log = f"[{event_time}] [LOG] Banned word detected."
-        logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
-        logfile.write(f"\n\n{log}")
-        print(log)
-        await message.delete()
-        log = f"[{event_time}] [LOG] Banned word deleted."
+    # Watched Words
+    if any(word in message.content for word in watchedWords):
+        user = message.author
+        channel = message.channel
+        embed = discord.Embed(title=f"Watched Word Detected from {user} in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
+        embed.add_field(name=f"Content", value=f"{message.content}", inline=False)
+        embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {message.id} \n```", inline=False)
+        embed.timestamp = message.created_at
+        channel = client.get_channel(watched_message)
+        await channel.send(embed=embed)
+        now = datetime.now()
+        event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
+        log = f"[{event_time}] [LOG] Watched Word Detected\nUser: {user}({user.id})\nServer: {message.guild}({message.guild.id})\nContent: {message.content}"
         logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
         logfile.write(f"\n\n{log}")
         print(log)
@@ -315,7 +318,7 @@ async def choose(interaction: discord.Interaction, choice1: str, choice2: str):
     choice2 = choice2
     choices = [choice1, choice2]
     IRISchoose = random.choice(choices)
-    await interaction.response.send_message(f"**[** {choice1} **|** {choice2} **]** \n I choose: {IRISchoose}")
+    await interaction.response.send_message(f"**[** {choice1} **|** {choice2} **]** \n{IRISchoose}")
 
 
 # Ping Check
