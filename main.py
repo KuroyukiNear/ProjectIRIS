@@ -51,6 +51,7 @@ edited_message = channelID
 censored_message = channelID
 voice_events = channelID
 watched_message = 1198955918742802563
+feedback_channel = 1199017405209383125
 # User ID
 ownerID = [638342719592202251, 729854914812968991]
 # Iris Responses
@@ -401,7 +402,7 @@ async def sync(interaction: discord.Interaction):
         await interaction.response.send_message("Only papa can use this command!")
 
 
-# Developer Info
+# [Console] Developer Info
 # Guild List
 @client.tree.command(name = "guilds", description = "Console Command", guild=discord.Object(id=952892062552981526))
 async def devinfo(ctx: discord.Interaction):
@@ -426,7 +427,6 @@ async def devinfo(ctx: discord.Interaction):
             f"I'm currently connected to **{len(client.guilds)} servers** <:anime_brighteyes:943480188195442758> More detailed information has been sent to your DMs! <a:UruhaRushia_happy:940254774094364694>")
     else:
         await ctx.response.send_message("Only papa can use this command!")
-
 
 # Members
 @client.tree.command(name = "members", description = "Console Command", guild=discord.Object(id=952892062552981526))
@@ -463,7 +463,6 @@ async def devinfo(ctx: discord.Interaction, guild: str):
             f"**{server}** currently has **{len(server.members)} members** <:anime_brighteyes:943480188195442758> More detailed information has been sent to your DMs! <a:UruhaRushia_happy:940254774094364694>")
     else:
         await ctx.response.send_message("Only papa can use this command!")
-
 
 # Channels
 @client.tree.command(name = "channels", description = "Console Command", guild=discord.Object(id=952892062552981526))
@@ -523,6 +522,30 @@ async def cls(ctx: discord.Interaction):
             await message.delete()
             time.sleep(0.5)
     await ctx.channel.send("All messages in the DM has been deleted.")
+
+
+# Feedback Command
+@client.tree.command(name = "feedback", description = "Feedback about your experiences with Iris")
+@app_commands.describe(feedback = "Enter your feedback.")
+async def say(ctx: discord.Interaction, feedback: str):
+    embed = discord.Embed(title=f"Feedback Received",description=(f"{feedback}"),colour=discord.Colour.dark_red())
+    embed.add_field(name=f"{ctx.guild}", value=f"{ctx.user.name} | {ctx.user.mention}", inline=False)
+    channel = client.get_channel(feedback_channel)
+    await channel.send(embed=embed)
+    await ctx.response.send_message("Your feedback has been received!")
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
