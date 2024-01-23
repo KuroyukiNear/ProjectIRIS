@@ -56,9 +56,10 @@ feedback_channel = 1199017405209383125
 ownerID = [638342719592202251, 729854914812968991]
 # Iris Responses
 papa = ["hi papa", "hello papa", "hola papa"]
-user = ["halo~", "hii", "你好你好你好", "yo", "Bonjour"]
+userping = ["halo~", "hii", "你好你好你好", "yo", "Bonjour"]
 luby = ["會長早晨！", "hi Luby姐姐"]
 summy = ["Summy早晨", "hi Summy"]
+skully = ["heyy skully hyd??"]
 # Watched Words
 watchedWords = ["testcode", "testcode2"]
 # Watchlist
@@ -215,17 +216,21 @@ async def on_message(message):
     # Bot Mentions
     if client.user.mentioned_in(message):
         log = f"[{event_time}] [LOG] Iris pinged by {message.author}({message.author.id})"
+
         papa_response = random.choice(papa)
-        user_response = random.choice(user)
+        user_response = random.choice(userping)
         luby_response = random.choice(luby)
         summy_response = random.choice(summy)
-        special_ID = [638342719592202251, 863088507740356609, 819114388212154368]
+        skully_response = random.choice(skully)
+        special_ID = [638342719592202251, 863088507740356609, 819114388212154368, 906840462764159009]
         if message.author.id == 638342719592202251:
           await message.reply(papa_response)
         if message.author.id == 863088507740356609:
           await message.reply(luby_response)
         if message.author.id == 819114388212154368:
           await message.reply(summy_response)
+        if message.author.id == 906840462764159009:
+          await message.reply(skully_response)
         if message.author.id not in special_ID:
           await message.reply(user_response)
         logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
@@ -542,7 +547,7 @@ async def info(ctx: discord.Interaction):
     embed.add_field(name=f"Owner", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
     embed.add_field(name=f"Developers", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
     embed.add_field(name=f"Public Relations", value=f"**Skully** `skull1fy`", inline=False)
-    embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html)", inline=False)
+    embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html) \n [Support](https://www.discord.gg/9RUy6suKsy)", inline=False)
     await ctx.response.send_message(embed=embed)
 
 
