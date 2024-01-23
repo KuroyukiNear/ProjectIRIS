@@ -535,7 +535,15 @@ async def say(ctx: discord.Interaction, feedback: str):
     await ctx.response.send_message("Your feedback has been received!")
 
 
-
+# Info Command
+@client.tree.command(name = "info", description = "More information about Iris")
+async def info(ctx: discord.Interaction):
+    embed = discord.Embed(title=f"Project IRIS Info",colour=discord.Colour.dark_red())
+    embed.add_field(name=f"Owner", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
+    embed.add_field(name=f"Developers", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
+    embed.add_field(name=f"Public Relations", value=f"**Skully** `skull1fy`", inline=False)
+    embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html)", inline=False)
+    await ctx.response.send_message(embed=embed)
 
 
 
