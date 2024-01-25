@@ -198,7 +198,7 @@ async def on_message(message):
         return
     
     # Watched Words
-    if any(word in message.content for word in watchedWords):
+    if any(word.casefold() in message.content.casefold() for word in watchedWords):
         user = message.author
         channel = message.channel
         embed = discord.Embed(title=f"Watched Word Detected from {user} in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
