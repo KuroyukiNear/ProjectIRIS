@@ -61,7 +61,8 @@ luby = ["會長早晨！", "hi Luby姐姐"]
 summy = ["Summy早晨", "hi Summy"]
 skully = ["heyy skully hyd??"]
 # Watched Words
-watchedWords = ["testcode", "testcode2"]
+with open("watchedWords.txt") as watchWordsFile:
+    watchedWords = [line.rstrip() for line in watchWordsFile]
 # Watchlist
 Watchlist = [0]
 # Dictionaries & Lists
