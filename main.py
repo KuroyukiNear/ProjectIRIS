@@ -26,6 +26,7 @@ from discord.ext import commands, tasks
 import os
 import sys
 import time
+import json
 import random
 from pathlib import Path
 from itertools import cycle
@@ -68,6 +69,10 @@ Watchlist = [0]
 # Dictionaries & Lists
 voice_timers = {}
 space = "     "
+
+# Opening JSON file
+userjson = open("profiles.json")
+userlist = json.load(userjson)
 # Utils
 now = datetime.now()
 login_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
@@ -409,7 +414,7 @@ async def sync(interaction: discord.Interaction):
 
 
 # [Console] Developer Info
-# Guild List
+## Guild List
 @client.tree.command(name = "guilds", description = "Console Command", guild=discord.Object(id=952892062552981526))
 async def devinfo(ctx: discord.Interaction):
     if ctx.user.id in ownerID:
@@ -434,7 +439,7 @@ async def devinfo(ctx: discord.Interaction):
     else:
         await ctx.response.send_message("Only papa can use this command!")
 
-# Members
+## Members
 @client.tree.command(name = "members", description = "Console Command", guild=discord.Object(id=952892062552981526))
 @app_commands.describe(guild = "Enter guild ID.")
 async def devinfo(ctx: discord.Interaction, guild: str):
@@ -470,7 +475,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
     else:
         await ctx.response.send_message("Only papa can use this command!")
 
-# Channels
+## Channels
 @client.tree.command(name = "channels", description = "Console Command", guild=discord.Object(id=952892062552981526))
 @app_commands.describe(guild = "Enter guild ID.")
 async def devinfo(ctx: discord.Interaction, guild: str):
@@ -516,7 +521,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
     else:
         await ctx.response.send_message("***Error*** You can't use that command.")
 
-# Clear DM
+# [CONSOLE] Clear DM
 @client.tree.command(name = "cls", description = "Clears your DM", guild=discord.Object(id=952892062552981526))
 async def cls(ctx: discord.Interaction):
     await ctx.response.send_message("This might take a while.")
@@ -551,17 +556,48 @@ async def info(ctx: discord.Interaction):
     embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html) \n [Support](https://www.discord.gg/9RUy6suKsy)", inline=False)
     await ctx.response.send_message(embed=embed)
 
+# Display Profile
+@client.tree.command(name = "profile", description = "Displays your profile", guild=discord.Object(id=952892062552981526))
+async def profile(ctx: discord.Interaction, member: discord.Member = None):
+    if member == None:
+        user = ctx.user
+    else:
+        user = member
+    # Get User
+    userid_to_find = user.id
+    users_list = userlist.get("users", [])
+    for user in users_list:
+        if user['ID'] == userid_to_find:
+            # Get RixCoins
+            rix = user["RixCoins"]
+            rix = f"`{rix}`"
+            # Get bio
+            bio = user["bio"]
+            if bio == "":
+                bio = "Empty :("
+            else:
+                bio = bio
+            # Get badges
+            user_badges = user.get("badges", [])
+            badges = ', '.join(map(str, user_badges))
+            if badges == "":
+                badges = "no badges"
+            else:
+                badges = badges
 
-
-
-
-
-
-
-
-
-
-
+    # Embed Profile
+    info = discord.Embed(title=f"{ctx.user}'s Profile",
+                         description="",
+                         colour=discord.Colour.dark_red())
+    info.add_field(name="RixCoins", value=f"{rix}", inline=True)
+    info.add_field(name="Messages Sent",
+                   value=f"`Under Development`",
+                   inline=False)
+    info.add_field(name="Project IRIS Badges",
+                   value=f"{badges}",
+                   inline=True)
+    info.add_field(name="Bio", value=f"{bio}", inline=False)
+    await ctx.response.send_message(embed=info)
 
 
 # Connect
