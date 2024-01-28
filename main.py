@@ -69,10 +69,6 @@ Watchlist = [0]
 # Dictionaries & Lists
 voice_timers = {}
 space = "     "
-
-# Opening JSON file
-userjson = open("profiles.json")
-userlist = json.load(userjson)
 # Utils
 now = datetime.now()
 login_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
@@ -521,6 +517,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
     else:
         await ctx.response.send_message("***Error*** You can't use that command.")
 
+
 # [CONSOLE] Clear DM
 @client.tree.command(name = "cls", description = "Clears your DM", guild=discord.Object(id=952892062552981526))
 async def cls(ctx: discord.Interaction):
@@ -556,49 +553,103 @@ async def info(ctx: discord.Interaction):
     embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html) \n [Support](https://www.discord.gg/9RUy6suKsy)", inline=False)
     await ctx.response.send_message(embed=embed)
 
+
+# Register new user
+def register_user(user_id, rix_coins, bio, badges):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    # Load the existing JSON data
+    with open("profiles.json") as userjson:
+        data = json.load(userjson)
+
+    # Create a new user object
+    new_user = {
+        "ID": user_id,
+        "RixCoins": rix_coins,
+        "bio": bio,
+        "badges": badges
+    }
+
+    # Add the new user to the "users" array
+    data["users"].append(new_user)
+    # Save the updated data back to the JSON file
+    with open("profiles.json", "w") as userjson:
+        json.dump(data, userjson, indent=4)
+
+
+# Check if user exists in profiles.json
+def user_exists(user_id):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+    # Load the existing JSON data
+    with open("profiles.json") as userjson:
+        userlist = json.load(userjson)
+    # Access the "users" array
+    users = userlist.get("users", [])
+    # Check if the user ID exists in the "users" array
+    return any(user['ID'] == user_id for user in users)
+
+
 # Display Profile
 @client.tree.command(name = "profile", description = "Displays your profile", guild=discord.Object(id=952892062552981526))
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+    # If user is mentioned
     if member == None:
         user = ctx.user
     else:
         user = member
-    # Get User
-    userid_to_find = user.id
-    users_list = userlist.get("users", [])
-    for user in users_list:
-        if user['ID'] == userid_to_find:
-            # Get RixCoins
-            rix = user["RixCoins"]
-            rix = f"`{rix}`"
-            # Get bio
-            bio = user["bio"]
-            # Get badges
-            user_badges = user.get("badges", [])
-            badges = ', '.join(map(str, user_badges))
-            if badges == "":
-                badges = "no badges"
-            else:
-                badges = badges
 
-    # Embed Profile
-    info = discord.Embed(title=f"{ctx.user}'s Profile",
-                         description="",
-                         colour=discord.Colour.dark_red())
-    info.add_field(name="RixCoins", value=f"{rix}", inline=True)
-    info.add_field(name="Messages Sent",
-                   value=f"`Under Development`",
-                   inline=False)
-    info.add_field(name="Project IRIS Badges",
-                   value=f"{badges}",
-                   inline=True)
-    info.add_field(name="Bio", value=f"{bio}", inline=False)
-    await ctx.response.send_message(embed=info)
+    # Check if user ID exists
+    userid_to_check = user.id
+    if user_exists(userid_to_check):
+        # Get User
+        userid_to_find = user.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Get RixCoins
+                rix = user["RixCoins"]
+                rix = f"`{rix}`"
+                # Get bio
+                bio = user["bio"]
+                # Get badges
+                user_badges = user.get("badges", [])
+                badges = ', '.join(map(str, user_badges))
+
+        # Embed Profile
+        info = discord.Embed(title=f"{ctx.user}'s Profile",
+                            description="",
+                            colour=discord.Colour.dark_red())
+        info.add_field(name="RixCoins", value=f"{rix}", inline=True)
+        info.add_field(name="Messages Sent",
+                    value=f"`Under Development`",
+                    inline=False)
+        info.add_field(name="Project IRIS Badges",
+                    value=f"{badges}",
+                    inline=True)
+        info.add_field(name="Bio", value=f"{bio}", inline=False)
+        await ctx.response.send_message(embed=info)
+
+    else:
+        register_user(
+            user_id=userid_to_check,
+            rix_coins=0,
+            bio="Use `/bio` to edit your bio",
+            badges=["`no badges`"]
+        )
+        await ctx.response.send_message("User has just been registered. Please use `/profile` again.")
 
 
 # Edit Bio
 @client.tree.command(name = "bio", description = "Edit your bio", guild=discord.Object(id=952892062552981526))
 async def bio(ctx: discord.Interaction, newbio: str):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
     # Get user
     userid_to_find = ctx.user.id
     users_list = userlist.get("users", [])
@@ -612,19 +663,6 @@ async def bio(ctx: discord.Interaction, newbio: str):
         await ctx.response.send_message(
             "Your bio has been changed.\nNote: if `/profile` is not working after you changed your bio, you have probably exceeded the 1,000 word limit."
         )
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Connect
