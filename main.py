@@ -592,7 +592,7 @@ def user_exists(user_id):
 
 
 # Display Profile
-@client.tree.command(name = "profile", description = "Displays your profile", guild=discord.Object(id=952892062552981526))
+@client.tree.command(name = "profile", description = "Displays your profile")
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
     # Opening JSON file
     userjson = open("profiles.json")
@@ -600,8 +600,10 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
     # If user is mentioned
     if member == None:
         user = ctx.user
+        username = ctx.user
     else:
         user = member
+        username = member
 
     # Check if user ID exists
     userid_to_check = user.id
@@ -621,19 +623,17 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
                 badges = ', '.join(map(str, user_badges))
 
         # Embed Profile
-        info = discord.Embed(title=f"{ctx.user}'s Profile",
-                            description="",
+        info = discord.Embed(title=f"{username}'s Profile",
+                            description=badges,
                             colour=discord.Colour.dark_red())
         info.add_field(name="RixCoins", value=f"{rix}", inline=True)
         info.add_field(name="Messages Sent",
                     value=f"`Under Development`",
                     inline=False)
-        info.add_field(name="Project IRIS Badges",
-                    value=f"{badges}",
-                    inline=True)
         info.add_field(name="Bio", value=f"{bio}", inline=False)
         await ctx.response.send_message(embed=info)
 
+    # Register if user does not exist
     else:
         register_user(
             user_id=userid_to_check,
@@ -645,7 +645,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
 
 
 # Edit Bio
-@client.tree.command(name = "bio", description = "Edit your bio", guild=discord.Object(id=952892062552981526))
+@client.tree.command(name = "bio", description = "Edit your bio")
 async def bio(ctx: discord.Interaction, newbio: str):
     # Opening JSON file
     userjson = open("profiles.json")
