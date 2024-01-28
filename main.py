@@ -573,10 +573,6 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
             rix = f"`{rix}`"
             # Get bio
             bio = user["bio"]
-            if bio == "":
-                bio = "Empty :("
-            else:
-                bio = bio
             # Get badges
             user_badges = user.get("badges", [])
             badges = ', '.join(map(str, user_badges))
@@ -598,6 +594,37 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
                    inline=True)
     info.add_field(name="Bio", value=f"{bio}", inline=False)
     await ctx.response.send_message(embed=info)
+
+
+# Edit Bio
+@client.tree.command(name = "bio", description = "Edit your bio", guild=discord.Object(id=952892062552981526))
+async def bio(ctx: discord.Interaction, newbio: str):
+    # Get user
+    userid_to_find = ctx.user.id
+    users_list = userlist.get("users", [])
+    for user in users_list:
+        if user['ID'] == userid_to_find:
+            # Edit bio
+            user["bio"] = newbio
+    # Save the modified data back to the JSON file
+    with open("profiles.json", "w") as userjson:
+        json.dump(userlist, userjson, indent=4)
+        await ctx.response.send_message(
+            "Your bio has been changed.\nNote: if `/profile` is not working after you changed your bio, you have probably exceeded the 1,000 word limit."
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Connect
