@@ -53,22 +53,14 @@ censored_message = channelID
 voice_events = channelID
 watched_message = 1198955918742802563
 feedback_channel = 1199017405209383125
-# User ID
-ownerID = [638342719592202251, 729854914812968991]
-# Iris Responses
-papa = ["hi papa", "hello papa", "hola papa"]
-userping = ["halo~", "hii", "你好你好你好", "yo", "Bonjour"]
-luby = ["會長早晨！", "hi Luby姐姐"]
-summy = ["Summy早晨", "hi Summy"]
-skully = ["heyy skully hyd??"]
 # Watched Words
 with open("watchedWords.txt") as watchWordsFile:
     watchedWords = [line.rstrip() for line in watchWordsFile]
-# Watchlist
-Watchlist = [0]
 # Dictionaries & Lists
 voice_timers = {}
 space = "     "
+Watchlist = [0]
+ownerID = [638342719592202251, 729854914812968991]
 # Utils
 now = datetime.now()
 login_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
@@ -190,6 +182,29 @@ async def on_message_edit(message_before, message_after):
     print(log)
 
 
+# Check if user exists in customResponses.json
+def user_exists(user_id):
+    # Opening JSON file
+    userjson = open("customResponses.json", encoding="UTF-8")
+    userlist = json.load(userjson)
+    # Load the existing JSON data
+    with open("customResponses.json") as userjson:
+        userlist = json.load(userjson)
+    # Access the "users" array
+    users = userlist.get("users", [])
+    # Check if the user ID exists in the "users" array
+    return any(user['ID'] == user_id for user in users)
+def user_notExist(user_id):
+    # Opening JSON file
+    with open("customResponses.json", encoding="UTF-8") as userjson:
+        userlist = json.load(userjson)
+    # Access the "users" array
+    users = userlist.get("users", [])
+    # Check if the user ID does not exist in the "users" array
+    return not any(user['ID'] == user_id for user in users)
+
+
+
 # Message Detection
 @client.event
 async def on_message(message):
@@ -218,26 +233,40 @@ async def on_message(message):
     # Bot Mentions
     if client.user.mentioned_in(message):
         log = f"[{event_time}] [LOG] Iris pinged by {message.author}({message.author.id})"
-
-        papa_response = random.choice(papa)
-        user_response = random.choice(userping)
-        luby_response = random.choice(luby)
-        summy_response = random.choice(summy)
-        skully_response = random.choice(skully)
-        special_ID = [638342719592202251, 863088507740356609, 819114388212154368, 906840462764159009]
-        if message.author.id == 638342719592202251:
-          await message.reply(papa_response)
-        if message.author.id == 863088507740356609:
-          await message.reply(luby_response)
-        if message.author.id == 819114388212154368:
-          await message.reply(summy_response)
-        if message.author.id == 906840462764159009:
-          await message.reply(skully_response)
-        if message.author.id not in special_ID:
-          await message.reply(user_response)
-        logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
-        logfile.write(f"\n\n{log}")
-        print(log)
+        # Opening JSON file
+        userjson = open("customResponses.json", encoding="UTF-8")
+        userlist = json.load(userjson)
+        # Check if user ID exists
+        userid_to_check = message.author.id
+        if user_exists(userid_to_check):
+            # Get User
+            userid_to_find = message.author.id
+            users_list = userlist.get("users", [])
+            for user in users_list:
+                if user['ID'] == userid_to_find:
+                    # Get responses
+                    responses = user["responses"]
+                    responses = random.choice(responses)
+                    await message.reply(responses)
+                    logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
+                    logfile.write(f"\n\n{log}")
+                    print(log)
+    if user_notExist(userid_to_check):
+        log = f"[{event_time}] [LOG] Iris pinged by {message.author}({message.author.id})"
+        # Opening JSON file
+        userjson = open("customResponses.json", encoding="UTF-8")
+        userlist = json.load(userjson)
+        # Get User
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == 0:
+                # Get responses
+                responses = user["responses"]
+                responses = random.choice(responses)
+                await message.reply(responses)
+                logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
+                logfile.write(f"\n\n{log}")
+                print(log)
 
 
 # Voice Channel Log
