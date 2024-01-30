@@ -580,7 +580,7 @@ async def info(ctx: discord.Interaction):
     embed.add_field(name=f"Owner", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
     embed.add_field(name=f"Developers", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
     embed.add_field(name=f"Public Relations", value=f"**Skully** `skull1fy`", inline=False)
-    embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html) \n [Support](https://www.discord.gg/9RUy6suKsy)", inline=False)
+    embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html) \n [Support Server](https://www.discord.gg/9RUy6suKsy)", inline=False)
     await ctx.response.send_message(embed=embed)
 
 
@@ -627,7 +627,7 @@ def user_exists(user_id):
 
 
 # Display Profile
-@client.tree.command(name = "profile", description = "Displays your profile")
+@client.tree.command(name = "profile", description = "Displays a user's profile")
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
     # Opening JSON file
     userjson = open("profiles.json")
@@ -708,7 +708,7 @@ async def bio(ctx: discord.Interaction, newbio: str):
 
 
 # Balance
-@client.tree.command(name = "balance", description = "Displays your balance")
+@client.tree.command(name = "balance", description = "Displays a user's balance")
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
     # Opening JSON file
     userjson = open("profiles.json")
