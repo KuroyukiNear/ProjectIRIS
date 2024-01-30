@@ -595,7 +595,8 @@ def register_user(user_id, rix_coins, bio, badges):
     # Create a new user object
     new_user = {
         "ID": user_id,
-        "RixCoins": rix_coins,
+        "wallet": rix_coins,
+        "bank": rix_coins,
         "bio": bio,
         "badges": badges
     }
@@ -644,8 +645,10 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
         for user in users_list:
             if user['ID'] == userid_to_find:
                 # Get RixCoins
-                rix = user["RixCoins"]
-                rix = f"`{rix}`"
+                wrix = user["wallet"]
+                brix = user["bank"]
+                rix = f"`{wrix + brix}`"
+                
                 # Get bio
                 bio = user["bio"]
                 # Get badges
@@ -667,7 +670,8 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
     else:
         register_user(
             user_id=userid_to_check,
-            rix_coins=0,
+            wallet=50,
+            bank=0,
             bio="Use `/bio` to edit your bio",
             badges=["`no badges`"]
         )
