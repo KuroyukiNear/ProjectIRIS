@@ -585,7 +585,7 @@ async def info(ctx: discord.Interaction):
 
 
 # Register new user
-def register_user(user_id, rix_coins, bio, badges):
+def register_user(user_id, wallet, bank, bio, badges, total_earned, total_spent, peak_wealth, commands_issued):
     # Opening JSON file
     userjson = open("profiles.json")
     # Load the existing JSON data
@@ -595,10 +595,14 @@ def register_user(user_id, rix_coins, bio, badges):
     # Create a new user object
     new_user = {
         "ID": user_id,
-        "wallet": rix_coins,
-        "bank": rix_coins,
+        "wallet": wallet,
+        "bank": bank,
         "bio": bio,
-        "badges": badges
+        "badges": badges,
+        "total_earned": total_earned,
+        "total_spent": total_spent,
+        "peak_wealth": peak_wealth,
+        "commands_issued": commands_issued
     }
 
     # Add the new user to the "users" array
@@ -673,7 +677,11 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
             wallet=50,
             bank=0,
             bio="Use `/bio` to edit your bio",
-            badges=["`no badges`"]
+            badges=["`no badges`"],
+            total_earned=0,
+            total_spent=0,
+            peak_wealth=0,
+            commands_issued=0
         )
         await ctx.response.send_message("User has just been registered. Please use `/profile` again.")
 
@@ -743,7 +751,11 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
             wallet=50,
             bank=0,
             bio="Use `/bio` to edit your bio",
-            badges=["`no badges`"]
+            badges=["`no badges`"],
+            total_earned=0,
+            total_spent=0,
+            peak_wealth=0,
+            commands_issued=0
         )
         await ctx.response.send_message("User has just been registered. Please use `/balance` again.")
 
