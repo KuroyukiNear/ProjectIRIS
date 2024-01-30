@@ -699,6 +699,54 @@ async def bio(ctx: discord.Interaction, newbio: str):
         )
 
 
+# Balance
+@client.tree.command(name = "balance", description = "Displays your balance")
+async def profile(ctx: discord.Interaction, member: discord.Member = None):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+    # If user is mentioned
+    if member == None:
+        user = ctx.user
+        username = ctx.user
+    else:
+        user = member
+        username = member
+
+    # Check if user ID exists
+    userid_to_check = user.id
+    if user_exists(userid_to_check):
+        # Get User
+        userid_to_find = user.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Get RixCoins
+                wrix = user["wallet"]
+                brix = user["bank"]
+                rix = f"`{wrix + brix}`"
+
+        # Embed Profile
+        info = discord.Embed(title=f"{username}'s Profile",
+                            description=f"Networth: `{rix}`RC",
+                            colour=discord.Colour.dark_red())
+        info.add_field(name="Wallet", value=f"`{wrix}`RC", inline=True)
+        info.add_field(name="Bank",
+                    value=f"`{brix}`RC",
+                    inline=True)
+        await ctx.response.send_message(embed=info)
+
+    # Register if user does not exist
+    else:
+        register_user(
+            user_id=userid_to_check,
+            wallet=50,
+            bank=0,
+            bio="Use `/bio` to edit your bio",
+            badges=["`no badges`"]
+        )
+        await ctx.response.send_message("User has just been registered. Please use `/balance` again.")
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
