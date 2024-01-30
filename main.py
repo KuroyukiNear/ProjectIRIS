@@ -217,7 +217,8 @@ async def on_message(message):
     if any(word.casefold() in message.content.casefold() for word in watchedWords):
         user = message.author
         channel = message.channel
-        embed = discord.Embed(title=f"Watched Word Detected from {user} in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
+        msg_link = f"https://discord.com/channels/{message.guild.id}/{channel.id}/{message.id}"
+        embed = discord.Embed(title=f"Watched Word Detected from {user} in {message.guild}",description=(f"{user.mention} **|** {msg_link}"),colour=discord.Colour.purple())
         embed.add_field(name=f"Content", value=f"{message.content}", inline=False)
         embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {message.id} \n```", inline=False)
         embed.timestamp = message.created_at
