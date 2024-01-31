@@ -53,6 +53,7 @@ censored_message = channelID
 voice_events = channelID
 watched_message = 1198955918742802563
 feedback_channel = 1199017405209383125
+report_channel = 1199017405209383125
 # Watched Words
 with open("watchedWords.txt") as watchWordsFile:
     watchedWords = [line.rstrip() for line in watchWordsFile]
@@ -565,12 +566,23 @@ async def cls(ctx: discord.Interaction):
 # Feedback Command
 @client.tree.command(name = "feedback", description = "Feedback about your experiences with Iris")
 @app_commands.describe(feedback = "Enter your feedback.")
-async def say(ctx: discord.Interaction, feedback: str):
+async def feedback(ctx: discord.Interaction, feedback: str):
     embed = discord.Embed(title=f"Feedback Received",description=(f"{feedback}"),colour=discord.Colour.dark_red())
     embed.add_field(name=f"{ctx.guild}", value=f"{ctx.user.name} | {ctx.user.mention}", inline=False)
     channel = client.get_channel(feedback_channel)
     await channel.send(embed=embed)
     await ctx.response.send_message("Your feedback has been received!")
+
+# Report Command
+@client.tree.command(name = "report", description = "Report a user")
+@app_commands.describe(user_id = "Enter the user ID to be reported.")
+@app_commands.describe(report_reason = "Enter your reason of reporting.")
+async def report(ctx: discord.Interaction, user_id: str, report_reason: str):
+    embed = discord.Embed(title=f"User Report Received",description=(f"{user_id}\n{report_reason}"),colour=discord.Colour.dark_red())
+    embed.add_field(name=f"{ctx.guild}", value=f"{ctx.user.name} | {ctx.user.mention}", inline=False)
+    channel = client.get_channel(report_channel)
+    await channel.send(embed=embed)
+    await ctx.response.send_message("User reported!")
 
 
 # Info Command
