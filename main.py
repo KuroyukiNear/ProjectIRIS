@@ -205,6 +205,42 @@ def user_notExist(user_id):
     return not any(user['ID'] == user_id for user in users)
 
 
+# Create new log object
+def create_log(guildName, guildID, channelName, channelID, authorName, authorID, messageID, eventTime, wordDetected, messageContent):
+    # Opening JSON file
+    logjson = open("watchedWords_log.json")
+    # Load the existing JSON data
+    with open("watchedWords_log.json") as logjson:
+        data = json.load(logjson)
+    # Create a new log object
+    new_log = {
+            "info": [
+                {
+                    "guildName": guildName,
+                    "guildID": guildID
+                },
+                {
+                    "channelName": channelName,
+                    "channelID": channelID
+                },
+                {
+                    "authorName": authorName,
+                    "authorID": authorID
+                },
+                {
+                    "messageID": messageID,
+                    "eventTime": eventTime
+                }
+                    ],
+                "wordDetected": wordDetected,
+                "messageContent": messageContent
+                    }
+    # Add the new log to the "messages" array
+    data["messages"].append(new_log)
+    # Save the updated data back to the JSON file
+    with open("watchedWords_log.json", "w", encoding="UTF-8") as logjson:
+        json.dump(data, logjson, indent=4)
+
 
 # Message Detection
 @client.event
@@ -216,21 +252,27 @@ async def on_message(message):
     
     ## Watched Words
     if any(word.casefold() in message.content.casefold() for word in watchedWords):
-        user = message.author
-        channel = message.channel
-        msg_link = f"https://discord.com/channels/{message.guild.id}/{channel.id}/{message.id}"
-        embed = discord.Embed(title=f"Watched Word Detected from {user} in {message.guild}",description=(f"{user.mention} **|** {msg_link}"),colour=discord.Colour.purple())
+        guildName = message.guild.name
+        guildID = message.guild.id
+        channelName = message.channel.name
+        channelID = message.channel.id
+        authorName = message.author.name
+        authorID = message.author.id
+        messageContent = message.content
+        messageID = message.id
+        matching_words = [word for word in watchedWords if word.casefold() in messageContent.casefold()]
+        for matching_word in matching_words:
+            wordDetected = matching_word
+        now = datetime.now()
+        eventTime = now.strftime("%Z %d/%b/%Y %H:%M:%S")
+        create_log(guildName, guildID, channelName, channelID, authorName, authorID, messageID, eventTime, wordDetected, messageContent)
+        msg_link = f"https://discord.com/channels/{guildID}/{channelID}/{messageID}"
+        embed = discord.Embed(title=f"Watched Word Detected from {authorName} in {guildName}",description=(f"{message.author.mention} **|** {msg_link}"),colour=discord.Colour.purple())
         embed.add_field(name=f"Content", value=f"{message.content}", inline=False)
-        embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {message.id} \n```", inline=False)
+        embed.add_field(name=f"ID", value=f"```\n Guild = {guildID} \n Channel = {channelID} \n User = {authorID} \n Message = {messageID} \n```", inline=False)
         embed.timestamp = message.created_at
         channel = client.get_channel(watched_message)
         await channel.send(embed=embed)
-        now = datetime.now()
-        event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
-        log = f"[{event_time}] [LOG] Watched Word Detected\nUser: {user}({user.id})\nServer: {message.guild}({message.guild.id})\nContent: {message.content}"
-        logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
-        logfile.write(f"\n\n{log}")
-        print(log)
     
     ## Bot Mentions
     if client.user.mentioned_in(message):
