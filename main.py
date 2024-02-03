@@ -639,7 +639,7 @@ async def info(ctx: discord.Interaction):
 
 
 # Register new user
-def register_user(user_id, wallet, bank, bio, badges, total_earned, total_spent, peak_wealth, commands_issued):
+def register_user(user_id, wallet, bank, bio, badges, total_earned, total_spent, total_transfered, total_received, peak_wealth, commands_issued):
     # Opening JSON file
     userjson = open("profiles.json")
     # Load the existing JSON data
@@ -655,6 +655,8 @@ def register_user(user_id, wallet, bank, bio, badges, total_earned, total_spent,
         "badges": badges,
         "total_earned": total_earned,
         "total_spent": total_spent,
+        "total_transfered": total_transfered,
+        "total_received": total_received,
         "peak_wealth": peak_wealth,
         "commands_issued": commands_issued
     }
@@ -734,6 +736,8 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
             badges=["`no badges`"],
             total_earned=0,
             total_spent=0,
+            total_transfered=0,
+            total_received=0,
             peak_wealth=0,
             commands_issued=0
         )
@@ -808,10 +812,92 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
             badges=["`no badges`"],
             total_earned=0,
             total_spent=0,
+            total_transfered=0,
+            total_received=0,
             peak_wealth=0,
             commands_issued=0
         )
         await ctx.response.send_message("User has just been registered. Please use `/balance` again.")
+
+
+# Transfer RixCoins
+@client.tree.command(name = "transfer", description = "Transfer RixCoins to another user")
+async def profile(ctx: discord.Interaction, member: discord.Member, amount: int):
+
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+
+    # Users
+    transferer = ctx.user
+    receiver = member
+    
+    # Check if transferer ID exists
+    userid_to_check = transferer.id
+    if user_exists(userid_to_check):
+        # Get transferer
+        userid_to_find = transferer.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Get data
+                transferer_rix = user["wallet"]
+                total_transfered = user["total_transfered"]
+    else:
+        await ctx.response.send_message(f"***ERROR*** User **{transferer.name}** not found.")
+
+    # Check if receiver ID exists
+    userid_to_check = receiver.id
+    if user_exists(userid_to_check):
+        # Get receiver
+        userid_to_find = receiver.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Get data
+                receiver_rix = user["wallet"]
+                total_received = user["total_received"]
+    else:
+        await ctx.response.send_message(f"***ERROR*** User **{member.name}** not found.")
+
+    # Not enough balance
+    if transferer_rix < amount:
+        await ctx.response.send_message("You do not have enough balance.")
+
+    # Enough balance
+    elif transferer_rix >= amount:
+        #New data
+        new_transferer_rix = transferer_rix - amount
+        new_receiver_rix = receiver_rix + amount
+        new_total_transfered = total_transfered + amount
+        new_total_received = total_received + amount
+
+        # Get transferer
+        userid_to_find = transferer.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Rewrite data
+                user["wallet"] = new_transferer_rix
+                user["total_transfered"] = new_total_transfered
+ 
+        # Get receiver
+        userid_to_find = receiver.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Rewrite data
+                user["wallet"] = new_receiver_rix
+                user["total_received"] = new_total_received
+
+        # Save the modified data back to the JSON file
+        with open("profiles.json", "w") as userjson:
+            json.dump(userlist, userjson, indent=4)
+
+        await ctx.response.send_message(f"Transfered `{amount}`RC to {member.name}. Your remaining balance is `{new_transferer_rix}`RC")
+
+
+
 
 # Connect
 load_dotenv()
