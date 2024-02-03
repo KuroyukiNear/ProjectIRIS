@@ -32,6 +32,7 @@ from pathlib import Path
 from itertools import cycle
 from datetime import datetime
 from dotenv import load_dotenv
+from collections import Counter
 
 
 # Client Settings
@@ -119,6 +120,14 @@ async def on_ready():
       guild_number = guild_number + 1
       prLightGray(f"{space}[{guild_number}] {guild} | ID:{guild.id} | {guild.owner}")
     prRed('<=>--------------------------------<=>')
+    
+    with open("profiles.json") as userjson:
+        userlist = json.load(userjson)
+    count = 0
+    for user in userlist.get("users", []):
+        count += 1
+    print(f"Number of profiles: {count}")
+
     channel = client.get_channel(1193155470186266754)
     message = await channel.fetch_message(1193237727144054865)
     restartTimes = int(message.content) + 1
@@ -639,7 +648,7 @@ async def info(ctx: discord.Interaction):
 
 
 # Register new user
-def register_user(user_id, wallet, bank, bio, badges, total_earned, total_spent, total_transfered, total_received, peak_wealth, commands_issued):
+def register_user(user_id, wallet, bank, bio, badges, user_number, total_earned, total_spent, total_transfered, total_received, peak_wealth, commands_issued):
     # Opening JSON file
     userjson = open("profiles.json")
     # Load the existing JSON data
@@ -653,6 +662,7 @@ def register_user(user_id, wallet, bank, bio, badges, total_earned, total_spent,
         "bank": bank,
         "bio": bio,
         "badges": badges,
+        "user_number": user_number,
         "total_earned": total_earned,
         "total_spent": total_spent,
         "total_transfered": total_transfered,
@@ -708,18 +718,19 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
                 wrix = user["wallet"]
                 brix = user["bank"]
                 rix = f"`{wrix + brix}`"
-                
-                # Get bio
+                # Get bio and user number
                 bio = user["bio"]
+                user_number = user["user_number"]
                 # Get badges
                 user_badges = user.get("badges", [])
                 badges = ', '.join(map(str, user_badges))
 
         # Embed Profile
         info = discord.Embed(title=f"{username}'s Profile",
-                            description=badges,
+                            description=f"User #{user_number}",
                             colour=discord.Colour.dark_red())
         info.add_field(name="RixCoins", value=f"{rix}", inline=True)
+        info.add_field(name="Badges", value=f"{badges}", inline=True)
         info.add_field(name="Messages Sent",
                     value=f"`Under Development`",
                     inline=False)
@@ -728,12 +739,16 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
 
     # Register if user does not exist
     else:
+        with open("profiles.json") as userjson:
+            userlist = json.load(userjson)
+            count = len(userlist.get("users", [])) # Does not need to add 1 to count as Iris will be User #0
         register_user(
             user_id=userid_to_check,
             wallet=50,
             bank=0,
             bio="Use `/bio` to edit your bio",
             badges=["`no badges`"],
+            user_number=count,
             total_earned=0,
             total_spent=0,
             total_transfered=0,
@@ -802,22 +817,9 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
                     inline=True)
         await ctx.response.send_message(embed=info)
 
-    # Register if user does not exist
+    # Reply if user does not exist
     else:
-        register_user(
-            user_id=userid_to_check,
-            wallet=50,
-            bank=0,
-            bio="Use `/bio` to edit your bio",
-            badges=["`no badges`"],
-            total_earned=0,
-            total_spent=0,
-            total_transfered=0,
-            total_received=0,
-            peak_wealth=0,
-            commands_issued=0
-        )
-        await ctx.response.send_message("User has just been registered. Please use `/balance` again.")
+        await ctx.response.send_message("User has not been registered. Please use `/profile` to register.")
 
 
 # Transfer RixCoins
@@ -831,7 +833,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
     # Users
     transferer = ctx.user
     receiver = member
-    
+
     # Check if transferer ID exists
     userid_to_check = transferer.id
     if user_exists(userid_to_check):
@@ -863,6 +865,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
     # Not enough balance
     if transferer_rix < amount:
         await ctx.response.send_message("You do not have enough balance.")
+        return
 
     # Enough balance
     elif transferer_rix >= amount:
