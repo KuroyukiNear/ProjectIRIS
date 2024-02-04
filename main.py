@@ -112,21 +112,21 @@ async def on_ready():
     server = len(client.guilds)
     server_count = int(server)
 
+    with open("profiles.json") as userjson:
+        userlist = json.load(userjson)
+    user_count = 0
+    for user in userlist.get("users", []):
+        user_count += 1
+
     prLightGray(f"{space}Connected to")
     prLightGray(f"{space}{server_count} Discord Guilds")
+    prLightGray(f"{space}{user_count} Iris Users")
     prRed('<=>--------------------------------<=>')
     guild_number = 0
     for guild in client.guilds:
       guild_number = guild_number + 1
       prLightGray(f"{space}[{guild_number}] {guild} | ID:{guild.id} | {guild.owner}")
     prRed('<=>--------------------------------<=>')
-    
-    with open("profiles.json") as userjson:
-        userlist = json.load(userjson)
-    count = 0
-    for user in userlist.get("users", []):
-        count += 1
-    print(f"Number of profiles: {count}")
 
     channel = client.get_channel(1193155470186266754)
     message = await channel.fetch_message(1193237727144054865)
@@ -833,6 +833,11 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
     # Users
     transferer = ctx.user
     receiver = member
+    
+    # Check if the users are the same
+    if transferer.id == receiver.id:
+        await ctx.response.send_message(f"***ERROR*** You can't transfer to yourself.")
+        return
 
     # Check if transferer ID exists
     userid_to_check = transferer.id
