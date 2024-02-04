@@ -11,7 +11,7 @@ When I wrote this code,
 only God and I knew how it worked.
 Now, only God knows.
 
-Last Edited: 07 January 2023
+Last Edited: 04 February 2023
 Version: v2.2.1
 """
 
@@ -50,23 +50,50 @@ channelID = 1122103608419291236
 user_join = channelID
 deleted_message = channelID
 edited_message = channelID
-censored_message = channelID
 voice_events = channelID
 watched_message = 1198955918742802563
 feedback_channel = 1199017405209383125
 report_channel = 1199017405209383125
+    
+# Opening Config JSON file
+with open("config.json") as configjson:
+    # Load the existing JSON data
+    configs = json.load(configjson)
+
+# Accessing channel IDs
+channel_id = configs.get("channel_id", {})
+user_join = channel_id.get("user_join")
+deleted_message = channel_id.get("deleted_message")
+edited_message = channel_id.get("edited_message")
+voice_events = channel_id.get("voice_events")
+watched_message = channel_id.get("watched_message")
+feedback_channel = channel_id.get("feedback_channel")
+report_channel = channel_id.get("report_channel")
+
+# Accessing log settings
+log_settings = configs.get("log_settings", {})
+log_user_join = log_settings.get("user_join")
+log_deleted_message = log_settings.get("deleted_message")
+log_edited_message = log_settings.get("edited_message")
+log_watched_message = log_settings.get("watched_message")
+log_voice_events = log_settings.get("voice_events")
+
+
 # Watched Words
 with open("watchedWords.txt") as watchWordsFile:
     watchedWords = [line.rstrip() for line in watchWordsFile]
+
 # Dictionaries & Lists
 voice_timers = {}
 space = "     "
 Watchlist = [0]
 ownerID = [638342719592202251, 729854914812968991]
+
 # Utils
 now = datetime.now()
 login_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
 logfile = Path("D:\\IRIS.log")
+
 # Colour Code Functions
 def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
 def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
@@ -248,6 +275,37 @@ def user_exists(user_id):
     users = userlist.get("users", [])
     # Check if the user ID exists in the "users" array
     return any(user['ID'] == user_id for user in users)
+
+
+# Commands Issued Counter
+def commands_issued(user_id):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+    # Load the existing JSON data
+    with open("profiles.json") as userjson:
+        userlist = json.load(userjson)
+    # Get user
+        userid_to_find = user_id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Rewrite data
+                user_commands_issued = user["commands_issued"]
+                new_user_commands_issued = user_commands_issued + 1
+                user["commands_issued"] = new_user_commands_issued
+    # Get Iris
+        userid_to_find = 902720782503907358
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Rewrite data
+                user_commands_issued = user["commands_issued"]
+                new_user_commands_issued = user_commands_issued + 1
+                user["commands_issued"] = new_user_commands_issued
+        # Save the modified data back to the JSON file
+        with open("profiles.json", "w") as userjson:
+            json.dump(userlist, userjson, indent=4)
 
 
 # Deleted Message Log
@@ -441,26 +499,29 @@ async def on_voice_state_update(user, before, after):
 
 # Hello Command
 @client.tree.command(name = "hello", description = "Says hello to Iris.")
-async def hello(interaction):
-    await interaction.response.send_message("Hello!")
+async def hello(ctx):
+    commands_issued(ctx.user.id)
+    await ctx.response.send_message("Hello!")
 
 
 # Iris Choice
 @client.tree.command(name = "choose", description = "Lets Iris choose for you.")
 @app_commands.describe(choice1 = "Enter first choice.")
 @app_commands.describe(choice2 = "Enter second choice.")
-async def choose(interaction: discord.Interaction, choice1: str, choice2: str):
+async def choose(ctx: discord.Interaction, choice1: str, choice2: str):
+    commands_issued(ctx.user.id)
     choice1 = choice1
     choice2 = choice2
     choices = [choice1, choice2]
     IRISchoose = random.choice(choices)
-    await interaction.response.send_message(f"**[** {choice1} **|** {choice2} **]** \n{IRISchoose}")
+    await ctx.response.send_message(f"**[** {choice1} **|** {choice2} **]** \n{IRISchoose}")
 
 
 # Ping Check
 @client.tree.command(name = "ping", description = "Checks Iris' latency.")
-async def ping(interaction):
-    await interaction.response.send_message(f"{round(client.latency * 1000)}ms")
+async def ping(ctx):
+    commands_issued(ctx.user.id)
+    await ctx.response.send_message(f"{round(client.latency * 1000)}ms")
 
 
 # User Status Count
@@ -496,17 +557,19 @@ async def usercount():
 
 # Join Voice
 @client.tree.command(name = "join", description = "Joins VC.")
-async def join(interaction: discord.Interaction):
-    channel = interaction.user.voice.channel
+async def join(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
+    channel = ctx.user.voice.channel
     await channel.connect()
-    await interaction.response.send_message("Connected")
+    await ctx.response.send_message("Connected")
 
 
 # Leave Voice
 @client.tree.command(name = "leave", description = "Leaves VC.")
-async def leave(interaction: discord.Interaction):
-    await interaction.guild.voice_client.disconnect()
-    await interaction.response.send_message("Disconnected")
+async def leave(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
+    await ctx.guild.voice_client.disconnect()
+    await ctx.response.send_message("Disconnected")
 
 
 # [Console] Say Command
@@ -514,6 +577,7 @@ async def leave(interaction: discord.Interaction):
 @app_commands.describe(say_text = "Enter message.")
 @app_commands.describe(say_channel = "Enter channel ID.")
 async def say(ctx: discord.Interaction, say_channel: str, say_text: str):
+    commands_issued(ctx.user.id)
     if ctx.user.id in ownerID:
       channel = client.get_channel(int(say_channel))
       message = await channel.send(say_text)
@@ -529,12 +593,13 @@ async def say(ctx: discord.Interaction, say_channel: str, say_text: str):
 
 # [Console] Sync Command Tree
 @client.tree.command(name="sync", description="Owner only", guild=discord.Object(id=952892062552981526))
-async def sync(interaction: discord.Interaction):
-    if interaction.user.id in ownerID:
+async def sync(ctx: discord.Interaction):
+    if ctx.user.id in ownerID:
+        commands_issued(ctx.user.id)
         await client.tree.sync()
-        await interaction.response.send_message("Command tree synced.")
+        await ctx.response.send_message("Command tree synced.")
     else:
-        await interaction.response.send_message("Only papa can use this command!")
+        await ctx.response.send_message("Only papa can use this command!")
 
 
 # [Console] Developer Info
@@ -542,6 +607,7 @@ async def sync(interaction: discord.Interaction):
 @client.tree.command(name = "guilds", description = "Console Command", guild=discord.Object(id=952892062552981526))
 async def devinfo(ctx: discord.Interaction):
     if ctx.user.id in ownerID:
+        commands_issued(ctx.user.id)
         page = 0
         # Guilds
         for i in range(0, len(client.guilds), 9):
@@ -570,6 +636,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
     guild_id = int(guild)
     server = client.get_guild(guild_id)
     if ctx.user.id in ownerID:
+        commands_issued(ctx.user.id)
         page = 0
 
         for i in range(0, len(server.members), 50):
@@ -606,6 +673,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
     guild_id = int(guild)
     server = client.get_guild(guild_id)
     if ctx.user.id in ownerID:
+        commands_issued(ctx.user.id)
         page = 0
         # Text Channels
         for i in range(0, len(server.text_channels), 25):
@@ -649,6 +717,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
 # [CONSOLE] Clear DM
 @client.tree.command(name = "cls", description = "Clears your DM", guild=discord.Object(id=952892062552981526))
 async def cls(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
     await ctx.response.send_message("This might take a while.")
     remove = 9999999999999999999999999999999999999999
     remove = remove * remove * remove
@@ -664,6 +733,7 @@ async def cls(ctx: discord.Interaction):
 @client.tree.command(name = "feedback", description = "Feedback about your experiences with Iris")
 @app_commands.describe(feedback = "Enter your feedback.")
 async def feedback(ctx: discord.Interaction, feedback: str):
+    commands_issued(ctx.user.id)
     embed = discord.Embed(title=f"Feedback Received",description=(f"{feedback}"),colour=discord.Colour.dark_red())
     embed.add_field(name=f"{ctx.guild}", value=f"{ctx.user.name} | {ctx.user.mention}", inline=False)
     channel = client.get_channel(feedback_channel)
@@ -675,6 +745,7 @@ async def feedback(ctx: discord.Interaction, feedback: str):
 @app_commands.describe(user_id = "Enter the user ID to be reported.")
 @app_commands.describe(report_reason = "Enter your reason of reporting.")
 async def report(ctx: discord.Interaction, user_id: str, report_reason: str):
+    commands_issued(ctx.user.id)
     embed = discord.Embed(title=f"User Report Received",description=(f"{user_id}\n{report_reason}"),colour=discord.Colour.dark_red())
     embed.add_field(name=f"{ctx.guild}", value=f"{ctx.user.name} | {ctx.user.mention}", inline=False)
     channel = client.get_channel(report_channel)
@@ -685,6 +756,7 @@ async def report(ctx: discord.Interaction, user_id: str, report_reason: str):
 # Info Command
 @client.tree.command(name = "info", description = "More information about Iris")
 async def info(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
     embed = discord.Embed(title=f"Project IRIS Info",colour=discord.Colour.dark_red())
     embed.add_field(name=f"Owner", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
     embed.add_field(name=f"Developers", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
@@ -696,6 +768,7 @@ async def info(ctx: discord.Interaction):
 # Display Profile
 @client.tree.command(name = "profile", description = "Displays a user's profile")
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
+    commands_issued(ctx.user.id)
     # Opening JSON file
     userjson = open("profiles.json")
     userlist = json.load(userjson)
@@ -763,6 +836,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
 # Edit Bio
 @client.tree.command(name = "bio", description = "Edit your bio")
 async def bio(ctx: discord.Interaction, newbio: str):
+    commands_issued(ctx.user.id)
     # Opening JSON file
     userjson = open("profiles.json")
     userlist = json.load(userjson)
@@ -784,6 +858,7 @@ async def bio(ctx: discord.Interaction, newbio: str):
 # Balance
 @client.tree.command(name = "balance", description = "Displays a user's balance")
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
+    commands_issued(ctx.user.id)
     # Opening JSON file
     userjson = open("profiles.json")
     userlist = json.load(userjson)
@@ -826,7 +901,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
 # Transfer RixCoins
 @client.tree.command(name = "transfer", description = "Transfer RixCoins to another user")
 async def profile(ctx: discord.Interaction, member: discord.Member, amount: int):
-
+    commands_issued(ctx.user.id)
     # Opening JSON file
     userjson = open("profiles.json")
     userlist = json.load(userjson)
