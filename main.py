@@ -145,53 +145,7 @@ async def change_status():
     await client.change_presence(activity=discord.Game(next(status)))
 
 
-# Deleted Message Log
-@client.event
-async def on_message_delete(message: str):
-    user = message.author
-    channel = message.channel
-    embed = discord.Embed(title=f"{user} deleted a message in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
-    embed.add_field(name=f"Content", value=f"{message.content}", inline=False)
-    embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {message.id} \n```", inline=False)
-    embed.timestamp = message.created_at
-    channel = client.get_channel(deleted_message)
-    await channel.send(embed=embed)
-    now = datetime.now()
-    event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
-    log = f"[{event_time}] [LOG] Message Deleted\nUser: {user}({user.id})\nServer: {message.guild}({message.guild.id})\nContent: {message.content}"
-    logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
-    logfile.write(f"\n\n{log}")
-    print(log)
-
-
-# Edited Message Log
-@client.event
-async def on_message_edit(message_before, message_after):
-  if message_before.author == message_before.author.bot:
-    return
-  if message_before.content == message_after.content:
-     return
-  else:
-    msg = message_after
-    user = msg.author
-    channel = msg.channel
-    server = msg.guild
-    msg_link = f"https://discord.com/channels/{server.id}/{channel.id}/{msg.id}"
-    embed = discord.Embed(title=f"{user} edited a message in {server}",description=(f"{user.mention} **|** {channel.mention} **|** {msg_link}"),colour=discord.Colour.purple())
-    embed.add_field(name=f"Original Message", value=f"{message_before.content}", inline=False)
-    embed.add_field(name=f"Edited Message", value=f"{message_after.content}", inline=False)
-    embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {msg.id} \n```", inline=False)
-    embed.timestamp = msg.created_at
-    channel = client.get_channel(edited_message)
-    await channel.send(embed=embed)
-    now = datetime.now()
-    event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
-    log = f"[{event_time}] [LOG] Message Edited\nUser: {user}({user.id})\nServer: {server}({server.id})\nContent: {message_before.content}\nEdited Content: {message_after.content}"
-    logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
-    logfile.write(f"\n\n{log}")
-    print(log)
-
-
+# Functions
 # Check if user exists in customResponses.json
 def user_exists(user_id):
     # Opening JSON file
@@ -249,6 +203,98 @@ def create_log(guildName, guildID, channelName, channelID, authorName, authorID,
     # Save the updated data back to the JSON file
     with open("watchedWords_log.json", "w", encoding="UTF-8") as logjson:
         json.dump(data, logjson, indent=4)
+
+
+# Register new user
+def register_user(user_id, wallet, bank, bio, badges, user_number, total_earned, total_spent, total_transfered, total_received, peak_wealth, commands_issued):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    # Load the existing JSON data
+    with open("profiles.json") as userjson:
+        data = json.load(userjson)
+
+    # Create a new user object
+    new_user = {
+        "ID": user_id,
+        "wallet": wallet,
+        "bank": bank,
+        "bio": bio,
+        "badges": badges,
+        "user_number": user_number,
+        "total_earned": total_earned,
+        "total_spent": total_spent,
+        "total_transfered": total_transfered,
+        "total_received": total_received,
+        "peak_wealth": peak_wealth,
+        "commands_issued": commands_issued
+    }
+
+    # Add the new user to the "users" array
+    data["users"].append(new_user)
+    # Save the updated data back to the JSON file
+    with open("profiles.json", "w") as userjson:
+        json.dump(data, userjson, indent=4)
+
+
+# Check if user exists in profiles.json
+def user_exists(user_id):
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+    # Load the existing JSON data
+    with open("profiles.json") as userjson:
+        userlist = json.load(userjson)
+    # Access the "users" array
+    users = userlist.get("users", [])
+    # Check if the user ID exists in the "users" array
+    return any(user['ID'] == user_id for user in users)
+
+
+# Deleted Message Log
+@client.event
+async def on_message_delete(message: str):
+    user = message.author
+    channel = message.channel
+    embed = discord.Embed(title=f"{user} deleted a message in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
+    embed.add_field(name=f"Content", value=f"{message.content}", inline=False)
+    embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {message.id} \n```", inline=False)
+    embed.timestamp = message.created_at
+    channel = client.get_channel(deleted_message)
+    await channel.send(embed=embed)
+    now = datetime.now()
+    event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
+    log = f"[{event_time}] [LOG] Message Deleted\nUser: {user}({user.id})\nServer: {message.guild}({message.guild.id})\nContent: {message.content}"
+    logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
+    logfile.write(f"\n\n{log}")
+    print(log)
+
+
+# Edited Message Log
+@client.event
+async def on_message_edit(message_before, message_after):
+  if message_before.author == message_before.author.bot:
+    return
+  if message_before.content == message_after.content:
+     return
+  else:
+    msg = message_after
+    user = msg.author
+    channel = msg.channel
+    server = msg.guild
+    msg_link = f"https://discord.com/channels/{server.id}/{channel.id}/{msg.id}"
+    embed = discord.Embed(title=f"{user} edited a message in {server}",description=(f"{user.mention} **|** {channel.mention} **|** {msg_link}"),colour=discord.Colour.purple())
+    embed.add_field(name=f"Original Message", value=f"{message_before.content}", inline=False)
+    embed.add_field(name=f"Edited Message", value=f"{message_after.content}", inline=False)
+    embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {msg.id} \n```", inline=False)
+    embed.timestamp = msg.created_at
+    channel = client.get_channel(edited_message)
+    await channel.send(embed=embed)
+    now = datetime.now()
+    event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
+    log = f"[{event_time}] [LOG] Message Edited\nUser: {user}({user.id})\nServer: {server}({server.id})\nContent: {message_before.content}\nEdited Content: {message_after.content}"
+    logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
+    logfile.write(f"\n\n{log}")
+    print(log)
 
 
 # Message Detection
@@ -645,51 +691,6 @@ async def info(ctx: discord.Interaction):
     embed.add_field(name=f"Public Relations", value=f"**Skully** `skull1fy`", inline=False)
     embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html) \n [Support Server](https://www.discord.gg/9RUy6suKsy)", inline=False)
     await ctx.response.send_message(embed=embed)
-
-
-# Register new user
-def register_user(user_id, wallet, bank, bio, badges, user_number, total_earned, total_spent, total_transfered, total_received, peak_wealth, commands_issued):
-    # Opening JSON file
-    userjson = open("profiles.json")
-    # Load the existing JSON data
-    with open("profiles.json") as userjson:
-        data = json.load(userjson)
-
-    # Create a new user object
-    new_user = {
-        "ID": user_id,
-        "wallet": wallet,
-        "bank": bank,
-        "bio": bio,
-        "badges": badges,
-        "user_number": user_number,
-        "total_earned": total_earned,
-        "total_spent": total_spent,
-        "total_transfered": total_transfered,
-        "total_received": total_received,
-        "peak_wealth": peak_wealth,
-        "commands_issued": commands_issued
-    }
-
-    # Add the new user to the "users" array
-    data["users"].append(new_user)
-    # Save the updated data back to the JSON file
-    with open("profiles.json", "w") as userjson:
-        json.dump(data, userjson, indent=4)
-
-
-# Check if user exists in profiles.json
-def user_exists(user_id):
-    # Opening JSON file
-    userjson = open("profiles.json")
-    userlist = json.load(userjson)
-    # Load the existing JSON data
-    with open("profiles.json") as userjson:
-        userlist = json.load(userjson)
-    # Access the "users" array
-    users = userlist.get("users", [])
-    # Check if the user ID exists in the "users" array
-    return any(user['ID'] == user_id for user in users)
 
 
 # Display Profile
