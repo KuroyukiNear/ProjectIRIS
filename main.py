@@ -981,6 +981,43 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
         await ctx.response.send_message(f"Transfered `{amount}`RC to {member.name}. Your remaining balance is `{new_transferer_rix}`RC")
 
 
+# Deposit RixCoins
+@client.tree.command(name = "deposit", description = "Deposit RixCoins to bank")
+async def profile(ctx: discord.Interaction, amount: int):
+    commands_issued(ctx.user.id)
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+
+    # Check if user ID exists
+    userid_to_check = ctx.user.id
+    if user_exists(userid_to_check):
+        # Get user
+        userid_to_find = ctx.user.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Get data
+                wallet = user["wallet"]
+                bank = user["bank"]
+
+                # Not enough balance
+                if wallet< amount:
+                    await ctx.response.send_message("You do not have enough balance.")
+                    return
+
+                # Enough balance
+                elif wallet >= amount:
+                    new_wallet = wallet - amount
+                    new_bank = bank + amount  
+                    user["wallet"] = new_wallet
+                    user["bank"] = new_bank
+                    # Save the modified data back to the JSON file
+                    with open("profiles.json", "w") as userjson:
+                        json.dump(userlist, userjson, indent=4)
+                    await ctx.response.send_message(f"Deposited `{amount}`RC to bank. Your remaining wallet balance is `{new_wallet}`RC")
+    else:
+        await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.")
 
 
 # Connect
