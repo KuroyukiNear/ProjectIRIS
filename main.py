@@ -185,14 +185,6 @@ def user_exists(user_id):
     users = userlist.get("users", [])
     # Check if the user ID exists in the "users" array
     return any(user['ID'] == user_id for user in users)
-def user_notExist(user_id):
-    # Opening JSON file
-    userjson = open("customResponses.json", encoding="UTF-8")
-    userlist = json.load(userjson)
-    # Access the "users" array
-    users = userlist.get("users", [])
-    # Check if the user ID does not exist in the "users" array
-    return not any(user['ID'] == user_id for user in users)
 
 
 # Create new log object
@@ -308,6 +300,18 @@ def commands_issued(user_id):
             json.dump(userlist, userjson, indent=4)
 
 
+# Function to get a random outcome based on probability distribution
+def get_random_outcome(outcomes):
+    rand_num = random.uniform(0, 1)
+    cumulative_probability = 0
+
+    for outcome in outcomes:
+        cumulative_probability += outcome["probability"]
+        if rand_num < cumulative_probability:
+            # Return a random value within the specified range
+            return random.choice(outcome["range"])
+        
+
 # Deleted Message Log
 @client.event
 async def on_message_delete(message: str):
@@ -408,7 +412,7 @@ async def on_message(message):
                     logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
                     logfile.write(f"\n\n{log}")
                     print(log)
-        if user_notExist(userid_to_check):
+        if not user_exists(userid_to_check):
             log = f"[{event_time}] [LOG] Iris pinged by {message.author}({message.author.id})"
             # Opening JSON file
             userjson = open("customResponses.json", encoding="UTF-8")
