@@ -28,6 +28,7 @@ import sys
 import time
 import json
 import random
+import asyncio
 from pathlib import Path
 from itertools import cycle
 from datetime import datetime
@@ -88,6 +89,7 @@ voice_timers = {}
 space = "     "
 Watchlist = [0]
 ownerID = [638342719592202251, 729854914812968991]
+cooldowns = {}
 
 # Utils
 now = datetime.now()
@@ -762,10 +764,12 @@ async def report(ctx: discord.Interaction, user_id: str, report_reason: str):
 async def info(ctx: discord.Interaction):
     commands_issued(ctx.user.id)
     embed = discord.Embed(title=f"Project IRIS Info",colour=discord.Colour.dark_red())
-    embed.add_field(name=f"Owner", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
-    embed.add_field(name=f"Developers", value=f"**Kuroyuki Near** `kuroyukinear`", inline=False)
-    embed.add_field(name=f"Public Relations", value=f"**Skully** `skull1fy`", inline=False)
-    embed.add_field(name=f"Links", value=f"[More Info](https://kuroyukinear.github.io/Near/projects/ProjectIRIS.html) \n [Support Server](https://www.discord.gg/9RUy6suKsy)", inline=False)
+    embed.add_field(name=f"**<=> Our Team <=>**", value=f"The people that made this Project IRIS possible", inline=False)
+    embed.add_field(name=f"Near `kuroyukinear`", value=f"Owner | Developer", inline=True)
+    embed.add_field(name=f"Skully `skull1fy`", value=f"Public Relations", inline=True)
+    embed.add_field(name=f"**<=> Links <=>**", value=f"Links related to Project IRIS", inline=False)
+    embed.add_field(name=f"Socials", value=f"[Twitter](https://twitter.com/KuroyukiNear)\n[Instagram](https://instagram.com/kuroyuki.near)", inline=True)
+    embed.add_field(name=f"Invites", value=f"[Bot Invite](https://discord.com/oauth2/authorize?client_id=902720782503907358&permissions=1644971949559&scope=bot)\n[Server Invite](https://discord.gg/9RUy6suKsy)", inline=True)
     await ctx.response.send_message(embed=embed)
 
 
@@ -807,11 +811,8 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
         info = discord.Embed(title=f"{username}'s Profile",
                             description=f"User #{user_number}",
                             colour=discord.Colour.dark_red())
-        info.add_field(name="RixCoins", value=f"{rix}", inline=True)
-        info.add_field(name="Badges", value=f"{badges}", inline=True)
-        info.add_field(name="Messages Sent",
-                    value=f"`Under Development`",
-                    inline=False)
+        info.add_field(name="Badges", value=f"{badges}", inline=False)
+        info.add_field(name="RixCoins", value=f"{rix}", inline=False)
         info.add_field(name="Bio", value=f"{bio}", inline=False)
         await ctx.response.send_message(embed=info)
 
@@ -916,7 +917,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
     
     # Check if the users are the same
     if transferer.id == receiver.id:
-        await ctx.response.send_message(f"***ERROR*** You can't transfer to yourself.")
+        await ctx.response.send_message(f"***ERROR*** You can't transfer to yourself.", ephemeral=True)
         return
 
     # Check if transferer ID exists
@@ -931,7 +932,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
                 transferer_rix = user["wallet"]
                 total_transfered = user["total_transfered"]
     else:
-        await ctx.response.send_message(f"***ERROR*** User **{transferer.name}** not found.")
+        await ctx.response.send_message(f"***ERROR*** User **{transferer.name}** not found.", ephemeral=True)
 
     # Check if receiver ID exists
     userid_to_check = receiver.id
@@ -945,7 +946,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
                 receiver_rix = user["wallet"]
                 total_received = user["total_received"]
     else:
-        await ctx.response.send_message(f"***ERROR*** User **{member.name}** not found.")
+        await ctx.response.send_message(f"***ERROR*** User **{member.name}** not found.", ephemeral=True)
 
     # Not enough balance
     if transferer_rix < amount:
@@ -1021,7 +1022,7 @@ async def profile(ctx: discord.Interaction, amount: int):
                         json.dump(userlist, userjson, indent=4)
                     await ctx.response.send_message(f"Deposited `{amount}`RC to bank. Your remaining wallet balance is `{new_wallet}`RC")
     else:
-        await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.")
+        await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.", ephemeral=True)
 
 
 # Withdraw RixCoins
@@ -1060,7 +1061,54 @@ async def profile(ctx: discord.Interaction, amount: int):
                         json.dump(userlist, userjson, indent=4)
                     await ctx.response.send_message(f"Withdrawn `{amount}`RC from bank. Your remaining bank balance is `{new_bank}`RC")
     else:
-        await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.")
+        await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.", ephemeral=True)
+
+
+# Work
+@client.tree.command(name = "work", description = "Work to earn RixCoins")
+async def work(ctx: discord.Interaction):
+    # Cooldown settings
+    cooldown_seconds = 60  # 1 minute
+    user_id = ctx.user.id
+    guild_id = ctx.guild.id
+    # Check if the user is on cooldown
+    if (guild_id, user_id) in cooldowns and time.time() - cooldowns[(guild_id, user_id)] < cooldown_seconds:
+        remaining_time = int(cooldown_seconds - (time.time() - cooldowns[(guild_id, user_id)]))
+        await ctx.response.send_message(f"You are on cooldown. Please wait {remaining_time} seconds.")
+        return
+    else:
+        commands_issued(ctx.user.id)
+        cooldowns[(guild_id, user_id)] = time.time()
+        # Define the probability distribution
+        outcomes = [
+            {"range": range(600, 801), "probability": 0.2},  # 20% chance of 600-800 coins
+            {"range": range(300, 501), "probability": 0.3},  # 30% chance of 300-500 coins
+            {"range": range(100, 201), "probability": 0.5},  # 50% chance of 100-200 coins
+        ]
+
+        # Opening JSON file
+        userjson = open("profiles.json")
+        userlist = json.load(userjson)
+
+        # Check if user ID exists
+        userid_to_check = ctx.user.id
+        if user_exists(userid_to_check):
+            # Get user
+            userid_to_find = ctx.user.id
+            users_list = userlist.get("users", [])
+            for user in users_list:
+                if user['ID'] == userid_to_find:
+                    # Select an outcome based on the probability distribution
+                    result = get_random_outcome(outcomes)
+                    # Get data
+                    wallet = user["wallet"]
+                    user["wallet"] = wallet + result
+                    # Save the modified data back to the JSON file
+                    with open("profiles.json", "w") as userjson:
+                        json.dump(userlist, userjson, indent=4)
+                    await ctx.response.send_message(f"You worked hard and earned `{result}`RC")
+        else:
+            await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.", ephemeral=True)
 
 
 # Connect
