@@ -227,7 +227,7 @@ def create_log(guildName, guildID, channelName, channelID, authorName, authorID,
 
 
 # Register new user
-def register_user(user_id, wallet, bank, bio, badges, user_number, total_earned, total_spent, total_transfered, total_received, peak_wealth, commands_issued):
+def register_user(user_id, wallet, bank, bio, badges, user_number, total_earned, total_spent, total_transfered, total_received, peak_wealth, commands_issued, inventory):
     # Opening JSON file
     userjson = open("profiles.json")
     # Load the existing JSON data
@@ -247,7 +247,8 @@ def register_user(user_id, wallet, bank, bio, badges, user_number, total_earned,
         "total_transfered": total_transfered,
         "total_received": total_received,
         "peak_wealth": peak_wealth,
-        "commands_issued": commands_issued
+        "commands_issued": commands_issued,
+        "inventory": inventory
     }
 
     # Add the new user to the "users" array
@@ -598,12 +599,12 @@ async def say(ctx: discord.Interaction, say_channel: str, say_text: str):
 
 
 # [Console] Sync Command Tree
-@client.tree.command(name="sync", description="Owner only", guild=discord.Object(id=952892062552981526))
+@client.tree.command(name="sync", description="Syncs the command tree", guild=discord.Object(id=952892062552981526))
 async def sync(ctx: discord.Interaction):
     if ctx.user.id in ownerID:
         commands_issued(ctx.user.id)
         await client.tree.sync()
-        await ctx.response.send_message("Command tree synced.")
+        await ctx.response.send_message(f"Command tree synced.<:OuroKronii_cheers:940254772395655218>")
     else:
         await ctx.response.send_message("Only papa can use this command!")
 
@@ -833,7 +834,8 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
             total_transfered=0,
             total_received=0,
             peak_wealth=0,
-            commands_issued=0
+            commands_issued=0,
+            inventory={}
         )
         await ctx.response.send_message("User has just been registered. Please use `/profile` again.")
 
@@ -1109,6 +1111,88 @@ async def work(ctx: discord.Interaction):
                     await ctx.response.send_message(f"You worked hard and earned `{result}`RC")
         else:
             await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.", ephemeral=True)
+
+
+# Inventory Command
+@client.tree.command(name="inventory", description="View your inventory")
+async def inventory(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
+    user_id = ctx.user.id
+
+    with open("profiles.json", "r") as userjson:
+        data = json.load(userjson)
+
+    user_data = next((user for user in data["users"] if user["ID"] == user_id), None)
+
+    if user_data:
+        inventory = user_data["inventory"]
+        if not inventory:
+            await ctx.send("Your inventory is empty.")
+            return
+
+        embed = discord.Embed(title=f"{ctx.user.name}'s Inventory", color=discord.Color.dark_red())
+        items_per_page = 5
+        page = 1
+
+        # Load item details from items.json
+        with open("items.json", "r") as itemsjson:
+            items_data = json.load(itemsjson)
+
+        # Sort inventory items by item ID
+        sorted_inventory = {str(item_id): count for item_id, count in sorted(inventory.items(), key=lambda x: int(x[0]))}
+
+        for item_id, count in list(sorted_inventory.items())[items_per_page * (page - 1): items_per_page * page]:
+
+            # Get item details based on item ID
+            item_details = items_data["items"][int(item_id) - 1]
+            item_name = item_details["name"]
+            item_icon = item_details["icon"]
+
+            item_count_rightjustified = str(count).rjust(10)
+            embed.add_field(name=f"[{item_id}] {item_icon}{item_name}", value=f"`{item_count_rightjustified}`", inline=False)
+
+        total_items = sum(inventory.values())
+        embed.set_footer(text=f"Page {page} | Total Items: {total_items}")
+
+        message = await ctx.channel.send(embed=embed)
+        await ctx.response.send_message(f"`/info` for more info about Iris", ephemeral=True)
+
+        # Add reactions for pagination
+        if len(inventory) > items_per_page:
+            await message.add_reaction("⬅️")
+            await message.add_reaction("➡️")
+
+            def check(reaction, user):
+                return user == ctx.user and reaction.message.id == message.id and str(reaction.emoji) in ["⬅️", "➡️"]
+
+            while True:
+                try:
+                    reaction, user = await client.wait_for("reaction_add", timeout=60, check=check)
+                    await message.remove_reaction(reaction, user)
+
+                    if str(reaction.emoji) == "⬅️" and page > 1:
+                        page -= 1
+                    elif str(reaction.emoji) == "➡️" and items_per_page * page < len(inventory):
+                        page += 1
+
+                    # Update the embed with the new page and total items
+                    embed.clear_fields()
+                    embed.add_field(name="", value="", inline=False)
+
+                    for item_id, count in list(sorted_inventory.items())[items_per_page * (page - 1): items_per_page * page]:
+                        item_details = items_data["items"][int(item_id) - 1]
+                        item_name = item_details["name"]
+                        item_icon = item_details["icon"]
+                        item_count_rightjustified = str(count).rjust(10)
+                        embed.add_field(name=f"[{item_id}] {item_icon}{item_name}", value=f"`{item_count_rightjustified}`", inline=False)
+
+                    embed.set_footer(text=f"Page {page} | Total Items: {total_items}")
+                    await message.edit(embed=embed)
+
+                except asyncio.TimeoutError:
+                    break
+    else:
+        await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.", ephemeral=True)
 
 
 # Connect
