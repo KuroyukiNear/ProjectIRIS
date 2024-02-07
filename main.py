@@ -24,11 +24,13 @@ from discord.ext import commands, tasks
 
 # Utility Modules
 import os
+import io
 import sys
 import time
 import json
 import random
 import asyncio
+import traceback
 from pathlib import Path
 from itertools import cycle
 from datetime import datetime
@@ -313,7 +315,30 @@ def get_random_outcome(outcomes):
         if rand_num < cumulative_probability:
             # Return a random value within the specified range
             return random.choice(outcome["range"])
-        
+
+
+# Update Peak Wealth
+def update_peak_wealth(user_id):
+    # Opening JSON file
+    with open("profiles.json", "r") as userjson:
+        userlist = json.load(userjson)
+
+    # Get user
+    userid_to_find = user_id
+    users_list = userlist.get("users", [])
+
+    for user in users_list:
+        if user['ID'] == userid_to_find:
+            current_wealth = user['wallet'] + user['bank']
+
+            # Check if the current wealth is higher than the recorded peak wealth
+            if current_wealth > user['peak_wealth']:
+                user['peak_wealth'] = current_wealth
+
+    # Save the modified data back to the JSON file
+    with open("profiles.json", "w") as userjson:
+        json.dump(userlist, userjson, indent=4)
+
 
 # Deleted Message Log
 @client.event
@@ -775,7 +800,7 @@ async def info(ctx: discord.Interaction):
 
 
 # Display Profile
-@client.tree.command(name = "profile", description = "Displays a user's profile")
+@client.tree.command(name = "profile", description = "View a user's profile")
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
     commands_issued(ctx.user.id)
     # Opening JSON file
@@ -863,7 +888,7 @@ async def bio(ctx: discord.Interaction, newbio: str):
 
 
 # Balance
-@client.tree.command(name = "balance", description = "Displays a user's balance")
+@client.tree.command(name = "balance", description = "View a user's balance")
 async def profile(ctx: discord.Interaction, member: discord.Member = None):
     commands_issued(ctx.user.id)
     # Opening JSON file
@@ -984,6 +1009,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member, amount: int)
         # Save the modified data back to the JSON file
         with open("profiles.json", "w") as userjson:
             json.dump(userlist, userjson, indent=4)
+        update_peak_wealth(receiver.id)
 
         await ctx.response.send_message(f"Transfered `{amount}`RC to {member.name}. Your remaining balance is `{new_transferer_rix}`RC")
 
@@ -1105,9 +1131,12 @@ async def work(ctx: discord.Interaction):
                     # Get data
                     wallet = user["wallet"]
                     user["wallet"] = wallet + result
+                    new_total_earned = user["total_earned"] + result
+                    user["total_earned"] = new_total_earned
                     # Save the modified data back to the JSON file
                     with open("profiles.json", "w") as userjson:
                         json.dump(userlist, userjson, indent=4)
+                    update_peak_wealth(userid_to_check)
                     await ctx.response.send_message(f"You worked hard and earned `{result}`RC")
         else:
             await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.", ephemeral=True)
@@ -1193,6 +1222,36 @@ async def inventory(ctx: discord.Interaction):
                     break
     else:
         await ctx.response.send_message(f"***ERROR*** User **{ctx.user.name}** not found.", ephemeral=True)
+
+
+# Item Command
+@client.tree.command(name="item", description="View an item's details")
+@app_commands.describe(item_id = "Enter item ID.")
+async def item(ctx: discord.Interaction, item_id: int):
+    commands_issued(ctx.user.id)
+    # Load items data from the JSON file
+    with open("items.json", "r") as file:
+        items_data = json.load(file)
+
+    # Find the item with the specified ID
+    found_item = next((item for item in items_data["items"] if item["ID"] == item_id), None)
+
+    if found_item:
+        embed = discord.Embed(
+            title=f"Item Details - ID: {found_item['ID']}",
+            color=discord.Color.dark_red()
+        )
+
+        embed.add_field(name="Name", value=found_item['name'])
+        embed.add_field(name="Description", value=found_item['desc'])
+        embed.add_field(name="Rarity", value=found_item['rarity'])
+        embed.add_field(name="Category", value=found_item['category'])
+        embed.add_field(name="Buy Price", value=found_item['buy_price'])
+        embed.add_field(name="Sell Price", value=found_item['sell_price'])
+
+        await ctx.response.send_message(embed=embed)
+    else:
+        await ctx.response.send_message("**ERROR** Item not found.", ephemeral=True)
 
 
 # Connect
