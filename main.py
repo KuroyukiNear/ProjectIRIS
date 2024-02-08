@@ -48,15 +48,6 @@ deleted_message = True
 edited_message = True
 censored_message = True
 voice_events = True
-# Channel ID
-channelID = 1122103608419291236 
-user_join = channelID
-deleted_message = channelID
-edited_message = channelID
-voice_events = channelID
-watched_message = 1198955918742802563
-feedback_channel = 1199017405209383125
-report_channel = 1199017405209383125
     
 # Opening Config JSON file
 with open("config.json") as configjson:
@@ -1252,6 +1243,76 @@ async def item(ctx: discord.Interaction, item_id: int):
         await ctx.response.send_message(embed=embed)
     else:
         await ctx.response.send_message("**ERROR** Item not found.", ephemeral=True)
+
+
+# Itemlist Command
+@client.tree.command(name="itemlist", description="View a list of items")
+async def nitemlist(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
+
+    with open("items.json", "r") as items_json:
+        items_data = json.load(items_json)["items"]
+
+    items_per_page = 5
+    total_items = len(items_data)
+    total_pages = (total_items + items_per_page - 1) // items_per_page
+
+    # Initial page
+    page = 1
+    start_index = (page - 1) * items_per_page
+    end_index = start_index + items_per_page
+
+    items_on_page = items_data[start_index:end_index]
+
+    if not items_on_page:
+        await ctx.send("No items found.")
+        return
+
+    embed = discord.Embed(title=f"Item List", color=discord.Color.dark_red())
+
+    for item in items_on_page:
+        item_id_rightjustified = str(item['ID']).rjust(5)
+        embed.add_field(name=f"{item['icon']}{item['name']}", value=f"**Item ID** `{item_id_rightjustified}`\n**{item['category']} | {item['rarity']}**", inline=False)
+
+    embed.set_footer(text=f"Page {page}/{total_pages} | {total_items} Items")
+    message = await ctx.channel.send(embed=embed)
+    await ctx.response.send_message(f"`/info` for more info about Iris", ephemeral=True)
+
+    # Add reactions for pagination
+    if total_pages > 1:
+        await message.add_reaction("⬅️")
+        await message.add_reaction("➡️")
+
+        def check(reaction, user):
+            return user == ctx.user and reaction.message.id == message.id and str(reaction.emoji) in ["⬅️", "➡️"]
+
+        while True:
+            try:
+                reaction, user = await client.wait_for("reaction_add", timeout=60, check=check)
+                await message.remove_reaction(reaction, user)
+
+                if str(reaction.emoji) == "⬅️" and page > 1:
+                    page -= 1
+                elif str(reaction.emoji) == "➡️" and page < total_pages:
+                    page += 1
+
+                # Update the embed with the new page
+                start_index = (page - 1) * items_per_page
+                end_index = start_index + items_per_page
+                items_on_page = items_data[start_index:end_index]
+
+                embed.clear_fields()
+                embed.add_field(name=f"", value="", inline=False)
+
+                for item in items_on_page:
+                    item_id_rightjustified = str(item['ID']).rjust(5)
+                    embed.add_field(name=f"{item['icon']}{item['name']}", value=f"**Item ID** `{item_id_rightjustified}`\n**{item['category']} | {item['rarity']}**", inline=False)
+
+                embed.set_footer(text=f"Page {page}/{total_pages} | Total Items: {total_items}")
+                await message.edit(embed=embed)
+
+            except asyncio.TimeoutError:
+                break
 
 
 # Connect
