@@ -1315,6 +1315,23 @@ async def nitemlist(ctx: discord.Interaction):
                 break
 
 
+# Execute Console
+@client.tree.command(name="console", guild=discord.Object(id=952892062552981526))
+async def execute_console(ctx: discord.Interaction, code: str):
+    commands_issued(ctx.user.id)
+    if ctx.user.id not in ownerID:
+        return await ctx.response.send_message("Only papa can use that command.")
+
+    # Execute the provided code
+    try:
+        result = eval(code)
+        await ctx.response.send_message(f"Result: {result}")
+    except Exception as e:
+        # Handle exceptions and send the traceback
+        traceback_str = "\n".join(traceback.format_exception(type(e), e, e.__traceback__))
+        await ctx.response.send_message(f"An error occurred:\n```{traceback_str}```")
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
