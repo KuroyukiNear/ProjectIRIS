@@ -1332,6 +1332,53 @@ async def execute_console(ctx: discord.Interaction, code: str):
         await ctx.response.send_message(f"An error occurred:\n```{traceback_str}```")
 
 
+# Status Command
+@client.tree.command(name="stats", description="View a user's status")
+async def stats(ctx: discord.Interaction, member: discord.Member = None):
+    commands_issued(ctx.user.id)
+    # Opening JSON file
+    userjson = open("profiles.json")
+    userlist = json.load(userjson)
+    # If user is mentioned
+    if member == None:
+        user = ctx.user
+        username = ctx.user
+    else:
+        user = member
+        username = member
+
+    # Check if user ID exists
+    userid_to_check = user.id
+    if user_exists(userid_to_check):
+        # Get User
+        userid_to_find = user.id
+        users_list = userlist.get("users", [])
+        for user in users_list:
+            if user['ID'] == userid_to_find:
+                # Get data
+                usernumber = str(user["user_number"]).rjust(10)
+                total_earned = str(user["total_earned"]).rjust(10)
+                total_spent = str(user["total_spent"]).rjust(10)
+                total_transfered = str(user["total_transfered"]).rjust(10)
+                total_received = str(user["total_received"]).rjust(10)
+                peak_wealth = str(user["peak_wealth"]).rjust(10)
+                user_commands_issued = str(user["commands_issued"]).rjust(10)
+
+        # Embed Profile
+        embed = discord.Embed(title=f"{username}'s Status", description=f"User #{usernumber}", colour=discord.Colour.dark_red())
+        embed.add_field(name="Total Earned", value=f"`{total_earned}`", inline=True)
+        embed.add_field(name="Total Spent", value=f"`{total_spent}`", inline=True)
+        embed.add_field(name="Total Transfered", value=f"`{total_transfered}`", inline=True)
+        embed.add_field(name="Total Received", value=f"`{total_received}`", inline=True)
+        embed.add_field(name="Peak Wealth", value=f"`{peak_wealth}`", inline=True)
+        embed.add_field(name="Commands Issued", value=f"`{user_commands_issued}`", inline=True)
+        await ctx.response.send_message(embed=embed)
+
+    # Reply if user does not exist
+    else:
+        await ctx.response.send_message(f"***ERROR*** User **{user}** not found.", ephemeral=True)
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
