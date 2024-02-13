@@ -1229,16 +1229,28 @@ async def item(ctx: discord.Interaction, item_id: int):
 
     if found_item:
         embed = discord.Embed(
-            title=f"Item Details - ID: {found_item['ID']}",
+            title=f"{found_item['name']}",
             color=discord.Color.dark_red()
         )
 
-        embed.add_field(name="Name", value=found_item['name'])
-        embed.add_field(name="Description", value=found_item['desc'])
-        embed.add_field(name="Rarity", value=found_item['rarity'])
-        embed.add_field(name="Category", value=found_item['category'])
-        embed.add_field(name="Buy Price", value=found_item['buy_price'])
-        embed.add_field(name="Sell Price", value=found_item['sell_price'])
+        # Sell Price
+        if found_item['sell_price'] == 0:
+            sell_price = "Not Sellable"
+        else:
+            sell_price = f"`{str(found_item['sell_price']).rjust(10)}`"
+        # Buy Price
+        if found_item['buy_price'] == 0:
+            buy_price = "Not Buyable"
+        else:
+            buy_price = f"`{str(found_item['buy_price']).rjust(10)}`"
+
+        item_id_rightjustified = str(found_item['ID']).rjust(5)
+        embed.add_field(name="Description", value=found_item['desc'], inline=False)
+        embed.add_field(name="ID", value=f"`{item_id_rightjustified}`", inline=True)
+        embed.add_field(name="Rarity", value=found_item['rarity'], inline=True)
+        embed.add_field(name="Category", value=found_item['category'], inline=True)
+        embed.add_field(name="Buy Price", value=buy_price, inline=True)
+        embed.add_field(name="Sell Price", value=sell_price, inline=True)
 
         await ctx.response.send_message(embed=embed)
     else:
