@@ -353,7 +353,7 @@ async def on_message_delete(message: str):
 # Edited Message Log
 @client.event
 async def on_message_edit(message_before, message_after):
-  if message_before.author == user.bot:
+  if message_before.author.bot:
     return
   if message_before.content == message_after.content:
      return
@@ -874,7 +874,7 @@ async def bio(ctx: discord.Interaction, newbio: str):
     with open("profiles.json", "w") as userjson:
         json.dump(userlist, userjson, indent=4)
         await ctx.response.send_message(
-            "Your bio has been changed.\nNote: if `/profile` is not working after you changed your bio, you have probably exceeded the 1,000 word limit."
+            "Your bio has been changed.\nNote: if `/profile` is not working after you changed your bio, you have probably exceeded the character limit."
         )
 
 
@@ -1259,7 +1259,7 @@ async def item(ctx: discord.Interaction, item_id: int):
 
 # Itemlist Command
 @client.tree.command(name="itemlist", description="View a list of items")
-async def nitemlist(ctx: discord.Interaction):
+async def itemlist(ctx: discord.Interaction):
     commands_issued(ctx.user.id)
 
     with open("items.json", "r") as items_json:
@@ -1467,6 +1467,40 @@ async def disconnect(ctx):
             await ctx.response.send_message("**[IRC]** Iris has successfully terminated the connection; channels are no longer linked.")
     else:
         await ctx.response.send_message("**[IRC]** Not currently linked to any channels.")
+
+
+# Book Item
+# New Book Command
+@client.tree.command(name="newbook", description="Write a new book", guild=discord.Object(id=952892062552981526))
+async def newbook(ctx, book_name: str, book_content:str):
+    book_name_count = len(book_name)
+    book_content_count = len(book_content)
+    if book_name_count > 16:
+        await ctx.response.send_message(f"The title of the book can't be more than 16 characters.")
+    if book_content_count > 800:
+        await ctx.response.send_message(f"The content of the book can't be more than 800 characters.")
+    else:
+        commands_issued(ctx.user.id)
+        # Opening JSON file
+        bookjson = open("book.json")
+        booklist = json.load(bookjson)
+        # Load the existing JSON data
+        with open("book.json") as bookjson:
+            data = json.load(bookjson)
+        count = len(booklist.get("books", []))
+        # Create a new user object
+        new_book = {
+            "bookID": count,
+            "bookName": book_name,
+            "bookAuthor": ctx.user.id,
+            "bookContent": book_content
+        }
+        # Add the new user to the "users" array
+        data["books"].append(new_book)
+        # Save the updated data back to the JSON file
+        with open("book.json", "w") as bookjson:
+            json.dump(data, bookjson, indent=4)
+        await ctx.response.send_message(f"`{book_name}` has been added to the library.\n\n*Note: Our staff reserves the rights to ban anyone from using Iris for spam writing books.*")
 
 
 # Connect
