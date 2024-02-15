@@ -1391,6 +1391,84 @@ async def stats(ctx: discord.Interaction, member: discord.Member = None):
         await ctx.response.send_message(f"***ERROR*** User **{user}** not found.", ephemeral=True)
 
 
+# Iris Remote Chat
+connected_channels = {}
+
+# IRC Connect Command
+@client.tree.command(name='connect', guild=discord.Object(id=952892062552981526))
+async def connect(ctx, channel_id: str):
+    if ctx.user.id not in ownerID:
+        return await ctx.response.send_message("Only papa can use that command.")
+    
+    destination_channel = client.get_channel(int(channel_id))
+    
+    if destination_channel:
+        connected_channels[ctx.channel.id] = destination_channel.id
+        connected_channels[destination_channel.id] = ctx.channel.id
+        await ctx.response.send_message(f"**[IRC]** Iris has connected to **#{destination_channel.name}**.")
+        forward_messages_tasks[(ctx.channel.id, destination_channel.id)] = client.loop.create_task(forward_messages(ctx.channel.id, destination_channel.id))
+    else:
+        await ctx.response.send_message("Invalid channel ID.")
+
+# Forward Messages
+forward_messages_tasks = {}
+
+async def forward_messages(source_channel_id, destination_channel_id):
+    source_channel = client.get_channel(source_channel_id)
+    destination_channel = client.get_channel(destination_channel_id)
+
+    try:
+        while True:
+            # Wait for a message from the source channel
+            source_message_task = asyncio.ensure_future(client.wait_for('message', check=lambda m: m.channel == source_channel and m.author != client.user))
+
+            # Wait for a message from the destination channel
+            destination_message_task = asyncio.ensure_future(client.wait_for('message', check=lambda m: m.channel == destination_channel and m.author != client.user))
+
+            done, _ = await asyncio.wait([source_message_task, destination_message_task], return_when=asyncio.FIRST_COMPLETED)
+
+            # Get the completed task
+            completed_task = done.pop().result()
+
+            # Send the message to the other channel
+            if completed_task.channel == source_channel:
+                await destination_channel.send(f"**{completed_task.author}** {completed_task.content}")
+            else:
+                    await source_channel.send(f"**{completed_task.author}** {completed_task.content}")
+
+    except asyncio.CancelledError:
+        # Handle cancellation
+        pass
+    finally:
+        forward_messages_tasks.pop((source_channel_id, destination_channel_id), None)
+
+# IRC Disconnect Command
+@client.tree.command(name='disconnect', guild=discord.Object(id=952892062552981526))
+async def disconnect(ctx):
+    if ctx.channel.id in connected_channels:
+        paired_channel_id = connected_channels[ctx.channel.id]
+        del connected_channels[paired_channel_id]
+        del connected_channels[ctx.channel.id]
+
+        source_channel = client.get_channel(ctx.channel.id)
+        destination_channel = client.get_channel(paired_channel_id)
+
+        # Check if channels are still connected
+        if source_channel and destination_channel:
+            # Cancel message forwarding task
+            forward_task = forward_messages_tasks.get((ctx.channel.id, paired_channel_id))
+            if forward_task:
+                forward_task.cancel()
+
+            await source_channel.send(f"**[IRC]** Connection has been terminated **{ctx.user}**.")
+            await destination_channel.send(f"**[IRC]** Connection has been terminated by **{ctx.user}**.")
+            await ctx.response.send_message(f"**[IRC]** All connections have been successfully terminated.")
+        else:
+            await ctx.response.send_message("**[IRC]** Iris has successfully terminated the connection; channels are no longer linked.")
+    else:
+        await ctx.response.send_message("**[IRC]** Not currently linked to any channels.")
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
