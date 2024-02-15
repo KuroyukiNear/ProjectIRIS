@@ -353,7 +353,7 @@ async def on_message_delete(message: str):
 # Edited Message Log
 @client.event
 async def on_message_edit(message_before, message_after):
-  if message_before.author == message_before.author.bot:
+  if message_before.author == user.bot:
     return
   if message_before.content == message_after.content:
      return
