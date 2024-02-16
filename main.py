@@ -1503,6 +1503,82 @@ async def newbook(ctx, book_name: str, book_content:str):
         await ctx.response.send_message(f"`{book_name}` has been added to the library.\n\n*Note: Our staff reserves the rights to ban anyone from using Iris for spam writing books.*")
 
 
+# Book List Command
+@client.tree.command(name="booklist", description="View a list of books", guild=discord.Object(id=952892062552981526))
+async def booklist(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
+
+    with open("book.json", "r") as booksjson:
+        books_data = json.load(booksjson)["books"]
+
+    books_per_page = 5
+    total_books = len(books_data)
+    total_pages = (total_books + books_per_page - 1) // books_per_page
+
+    # Initial page
+    page = 1
+    start_index = (page - 1) * books_per_page
+    end_index = start_index + books_per_page
+
+    books_on_page = books_data[start_index:end_index]
+
+    if not books_on_page:
+        await ctx.send("No books found.")
+        return
+
+    embed = discord.Embed(title=f"Iris' Library", color=discord.Color.dark_red())
+
+    for book in books_on_page:
+                    book_name = book["bookName"]
+                    book_id_rightjustified = str(book["bookID"]).rjust(5)
+                    author_id = book["bookAuthor"]
+                    user = client.get_user(author_id)
+                    embed.add_field(name=f"{book_name}", value=f"**Book ID** `{book_id_rightjustified}`\n**{user.display_name} | **`{author_id}`", inline=False)
+
+    embed.set_footer(text=f"Page {page}/{total_pages} | {total_books} Books")
+    message = await ctx.channel.send(embed=embed)
+    await ctx.response.send_message(f"`/info` for more info about Iris", ephemeral=True)
+
+    # Add reactions for pagination
+    if total_pages > 1:
+        await message.add_reaction("⬅️")
+        await message.add_reaction("➡️")
+
+        def check(reaction, user):
+            return user == ctx.user and reaction.message.id == message.id and str(reaction.emoji) in ["⬅️", "➡️"]
+
+        while True:
+            try:
+                reaction, user = await client.wait_for("reaction_add", timeout=60, check=check)
+                await message.remove_reaction(reaction, user)
+
+                if str(reaction.emoji) == "⬅️" and page > 1:
+                    page -= 1
+                elif str(reaction.emoji) == "➡️" and page < total_pages:
+                    page += 1
+
+                # Update the embed with the new page
+                start_index = (page - 1) * books_per_page
+                end_index = start_index + books_per_page
+                books_on_page = books_data[start_index:end_index]
+
+                embed.clear_fields()
+                embed.add_field(name=f"", value="", inline=False)
+
+                for book in books_on_page:
+                    book_name = book["bookName"]
+                    book_id_rightjustified = str(book["bookID"]).rjust(5)
+                    author_id = book["bookAuthor"]
+                    user = client.get_user(author_id)
+                    embed.add_field(name=f"{book_name}", value=f"**Book ID** `{book_id_rightjustified}`\n**{user.display_name} | **`{author_id}`", inline=False)
+
+                embed.set_footer(text=f"Page {page}/{total_pages} | Total Books: {total_books}")
+                await message.edit(embed=embed)
+
+            except asyncio.TimeoutError:
+                break
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
