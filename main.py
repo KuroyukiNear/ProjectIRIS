@@ -24,7 +24,6 @@ from discord.ext import commands, tasks
 
 # Utility Modules
 import os
-import io
 import sys
 import time
 import json
@@ -1471,7 +1470,7 @@ async def disconnect(ctx):
 
 # Book Item
 # New Book Command
-@client.tree.command(name="newbook", description="Write a new book", guild=discord.Object(id=952892062552981526))
+@client.tree.command(name="newbook", description="Write a new book")
 async def newbook(ctx, book_name: str, book_content:str):
     book_name_count = len(book_name)
     book_content_count = len(book_content)
@@ -1504,7 +1503,7 @@ async def newbook(ctx, book_name: str, book_content:str):
 
 
 # Book List Command
-@client.tree.command(name="booklist", description="View a list of books", guild=discord.Object(id=952892062552981526))
+@client.tree.command(name="booklist", description="View a list of books")
 async def booklist(ctx: discord.Interaction):
     commands_issued(ctx.user.id)
 
@@ -1577,6 +1576,34 @@ async def booklist(ctx: discord.Interaction):
 
             except asyncio.TimeoutError:
                 break
+
+
+# View Book Command
+@client.tree.command(name = "viewbook", description = "View a book")
+async def viewbook(ctx: discord.Interaction, book_id: str):
+    commands_issued(ctx.user.id)
+    # Opening JSON file
+    bookjson = open("book.json")
+    booklist = json.load(bookjson)
+    # Find book
+    book_id = int(book_id)
+    books_list = booklist.get("books", [])
+    for book in books_list:
+        if book["bookID"] == book_id:
+            # Get book data
+            book_name = book["bookName"]
+            book_author = book["bookAuthor"]
+            user = client.get_user(book_author)
+            book_content = book["bookContent"]
+            total_books = len(books_list)
+            embed = discord.Embed(title=f"{book_name}", color=discord.Color.dark_red())
+            embed.add_field(name=f"Author", value=f"{user.display_name} `{book_author}`", inline=False)
+            embed.add_field(name=f"Content", value=f"{book_content}", inline=False)
+            embed.set_footer(text=f"Book {book_id} out of {total_books} books")
+            await ctx.response.send_message(embed=embed)
+            break
+    else:
+        await ctx.response.send_message("Book not found")
 
 
 # Connect
