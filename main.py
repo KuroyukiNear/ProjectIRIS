@@ -27,6 +27,7 @@ import os
 import sys
 import time
 import json
+import shutil
 import random
 import asyncio
 import traceback
@@ -34,7 +35,7 @@ from pathlib import Path
 from itertools import cycle
 from datetime import datetime
 from dotenv import load_dotenv
-from collections import Counter
+from io import StringIO, BytesIO
 
 
 # Client Settings
@@ -53,7 +54,7 @@ with open("config.json") as configjson:
     # Load the existing JSON data
     configs = json.load(configjson)
 
-# Accessing channel IDs
+# Accessing configs - channel ID
 channel_id = configs.get("channel_id", {})
 user_join = channel_id.get("user_join")
 deleted_message = channel_id.get("deleted_message")
@@ -62,15 +63,16 @@ voice_events = channel_id.get("voice_events")
 watched_message = channel_id.get("watched_message")
 feedback_channel = channel_id.get("feedback_channel")
 report_channel = channel_id.get("report_channel")
+file_logger = channel_id.get("file_logger")
 
-# Accessing log settings
+# Accessing configs - Log Settings
 log_settings = configs.get("log_settings", {})
 log_user_join = log_settings.get("user_join")
 log_deleted_message = log_settings.get("deleted_message")
 log_edited_message = log_settings.get("edited_message")
 log_watched_message = log_settings.get("watched_message")
 log_voice_events = log_settings.get("voice_events")
-
+file_log_extensions = log_settings.get("file_log_extension", [])
 
 # Watched Words
 with open("watchedWords.txt") as watchWordsFile:
@@ -333,20 +335,23 @@ def update_peak_wealth(user_id):
 # Deleted Message Log
 @client.event
 async def on_message_delete(message: str):
-    user = message.author
-    channel = message.channel
-    embed = discord.Embed(title=f"{user} deleted a message in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
-    embed.add_field(name=f"Content", value=f"{message.content}", inline=False)
-    embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {message.id} \n```", inline=False)
-    embed.timestamp = message.created_at
-    channel = client.get_channel(deleted_message)
-    await channel.send(embed=embed)
-    now = datetime.now()
-    event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
-    log = f"[{event_time}] [LOG] Message Deleted\nUser: {user}({user.id})\nServer: {message.guild}({message.guild.id})\nContent: {message.content}"
-    logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
-    logfile.write(f"\n\n{log}")
-    print(log)
+    if message.author.id == client.user.id:
+        return
+    else:
+        user = message.author
+        channel = message.channel
+        embed = discord.Embed(title=f"{user} deleted a message in {message.guild}",description=(f"{user.mention} **|** {channel.mention}"),colour=discord.Colour.purple())
+        embed.add_field(name=f"Content", value=f"{message.content}", inline=False)
+        embed.add_field(name=f"ID", value=f"```\n Channel = {channel.id} \n User = {user.id} \n Message = {message.id} \n```", inline=False)
+        embed.timestamp = message.created_at
+        channel = client.get_channel(deleted_message)
+        await channel.send(embed=embed)
+        now = datetime.now()
+        event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
+        log = f"[{event_time}] [LOG] Message Deleted\nUser: {user}({user.id})\nServer: {message.guild}({message.guild.id})\nContent: {message.content}"
+        logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
+        logfile.write(f"\n\n{log}")
+        print(log)
 
 
 # Edited Message Log
@@ -380,21 +385,22 @@ async def on_message_edit(message_before, message_after):
 # Message Detection
 @client.event
 async def on_message(message):
+    guildName = message.guild.name
+    guildID = message.guild.id
+    channelName = message.channel.name
+    channelID = message.channel.id
+    authorName = message.author.name
+    authorID = message.author.id
+    messageContent = message.content
+    messageID = message.id
     now = datetime.now()
     event_time = now.strftime("%Z %d/%b/%Y %H:%M:%S")
+
     if message.author.id == client.user.id:
         return
     
     ## Watched Words
     if any(word.casefold() in message.content.casefold() for word in watchedWords):
-        guildName = message.guild.name
-        guildID = message.guild.id
-        channelName = message.channel.name
-        channelID = message.channel.id
-        authorName = message.author.name
-        authorID = message.author.id
-        messageContent = message.content
-        messageID = message.id
         matching_words = [word for word in watchedWords if word.casefold() in messageContent.casefold()]
         for matching_word in matching_words:
             wordDetected = matching_word
@@ -411,25 +417,28 @@ async def on_message(message):
     
     ## Bot Mentions
     if client.user.mentioned_in(message):
-        log = f"[{event_time}] [LOG] Iris pinged by {message.author}({message.author.id})"
-        # Opening JSON file
-        userjson = open("customResponses.json", encoding="UTF-8")
-        userlist = json.load(userjson)
-        # Check if user ID exists
-        userid_to_check = message.author.id
-        if user_exists(userid_to_check):
-            # Get User
-            userid_to_find = message.author.id
-            users_list = userlist.get("users", [])
-            for user in users_list:
-                if user['ID'] == userid_to_find:
-                    # Get responses
-                    responses = user["responses"]
-                    responses = random.choice(responses)
-                    await message.reply(responses)
-                    logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
-                    logfile.write(f"\n\n{log}")
-                    print(log)
+        if "@everyone" in message.content:
+            return
+        else:
+            log = f"[{event_time}] [LOG] Iris pinged by {message.author}({message.author.id})"
+            # Opening JSON file
+            userjson = open("customResponses.json", encoding="UTF-8")
+            userlist = json.load(userjson)
+            # Check if user ID exists
+            userid_to_check = message.author.id
+            if user_exists(userid_to_check):
+                # Get User
+                userid_to_find = message.author.id
+                users_list = userlist.get("users", [])
+                for user in users_list:
+                    if user['ID'] == userid_to_find:
+                        # Get responses
+                        responses = user["responses"]
+                        responses = random.choice(responses)
+                        await message.reply(responses)
+                        logfile = open(r"D:\\IRIS.log", "a", encoding="utf-8")
+                        logfile.write(f"\n\n{log}")
+                        print(log)
         if not user_exists(userid_to_check):
             log = f"[{event_time}] [LOG] Iris pinged by {message.author}({message.author.id})"
             # Opening JSON file
@@ -447,6 +456,35 @@ async def on_message(message):
                     logfile.write(f"\n\n{log}")
                     print(log)
 
+    ## File Logger
+    if message.attachments:
+        # Check if there are attachments in the message
+        for attachment in message.attachments:
+            msg_link = f"https://discord.com/channels/{guildID}/{channelID}/{messageID}"
+            if any(attachment.filename.lower().endswith(ext) for ext in file_log_extensions):
+                file_log_channel = client.get_channel(file_logger)
+                content = await attachment.read()
+                
+                # Text Files
+                if attachment.filename.lower().endswith("txt"):
+                    txt_file_like = StringIO(content.decode('utf-8'))
+                    txtfile = discord.File(txt_file_like, filename=attachment.filename)
+                    # Check word count
+                    word_count = len(content.decode('utf-8').split())
+                    # Check if word count is more than 300
+                    if word_count > 300:
+                        await file_log_channel.send(f"**{authorName}** `{authorID}`\n**{guildName}** `{guildID}`\n`{attachment.filename}` [source]({msg_link})\n```\nToo many characters\n```", file=txtfile)
+                    else:
+                        # Send the content normally
+                        await file_log_channel.send(f"**{authorName}** `{authorID}`\n**{guildName}** `{guildID}`\n`{attachment.filename}` [source]({msg_link})\n```\n{content.decode('utf-8')}\n```", file=txtfile)
+
+                # Images
+                image_extensions = ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "tif", "webp", "svg"]
+                image_file_like = BytesIO(content)
+                imgfile = discord.File(image_file_like, filename='your_image_filename.png')
+                if any(attachment.filename.lower().endswith(ext) for ext in image_extensions):
+                    await file_log_channel.send(f"**{authorName}** `{authorID}`\n**{guildName}** `{guildID}`\n`{attachment.filename}` [source]({msg_link})", file=imgfile)
+                    
 
 # Voice Channel Log
 @client.event
@@ -651,7 +689,7 @@ async def devinfo(ctx: discord.Interaction):
     else:
         await ctx.response.send_message("Only papa can use this command!")
 
-## Members
+## Members List
 @client.tree.command(name = "members", description = "Console Command", guild=discord.Object(id=952892062552981526))
 @app_commands.describe(guild = "Enter guild ID.")
 async def devinfo(ctx: discord.Interaction, guild: str):
@@ -688,7 +726,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
     else:
         await ctx.response.send_message("Only papa can use this command!")
 
-## Channels
+## Channels List
 @client.tree.command(name = "channels", description = "Console Command", guild=discord.Object(id=952892062552981526))
 @app_commands.describe(guild = "Enter guild ID.")
 async def devinfo(ctx: discord.Interaction, guild: str):
