@@ -1644,6 +1644,37 @@ async def viewbook(ctx: discord.Interaction, book_id: str):
         await ctx.response.send_message("Book not found")
 
 
+# Random Book Command
+@client.tree.command(name = "randombook", description = "View a random book", guild=discord.Object(id=952892062552981526))
+async def randombook(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
+    # Opening JSON file
+    bookjson = open("book.json")
+    booklist = json.load(bookjson)
+    # Extract book IDs into a list
+    book_ids = [book["bookID"] for book in booklist["books"]]
+    book_id = random.choice(book_ids)
+    # Find book
+    book_id = int(book_id)
+    books_list = booklist.get("books", [])
+    for book in books_list:
+        if book["bookID"] == book_id:
+            # Get book data
+            book_name = book["bookName"]
+            book_author = book["bookAuthor"]
+            user = client.get_user(book_author)
+            book_content = book["bookContent"]
+            total_books = len(books_list)
+            embed = discord.Embed(title=f"{book_name}", color=discord.Color.dark_red())
+            embed.add_field(name=f"Author", value=f"{user.display_name} `{book_author}`", inline=False)
+            embed.add_field(name=f"Content", value=f"{book_content}", inline=False)
+            embed.set_footer(text=f"Book {book_id} out of {total_books} books")
+            await ctx.response.send_message(embed=embed)
+            break
+    else:
+        await ctx.response.send_message("**ERROR** Please run the command again.", ephemeral=True)
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
