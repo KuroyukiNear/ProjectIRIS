@@ -1675,6 +1675,34 @@ async def randombook(ctx: discord.Interaction):
         await ctx.response.send_message("**ERROR** Please run the command again.", ephemeral=True)
 
 
+# Backup Command
+@client.tree.command(name="backup", description="Create a backup of a file")
+async def backup(ctx: discord.Interaction, filename: str):
+    if ctx.user.id in ownerID:
+        commands_issued(ctx.user.id)
+        try:
+            # Specify the original and backup file paths
+            original_filepath = filename
+            backup_folder = "backups"
+            backup_filename = f"{os.path.splitext(filename)[0]}-{datetime.now().strftime('%Y%m%d%H%M%S')}{os.path.splitext(filename)[1]}"
+            backup_filepath = os.path.join(backup_folder, backup_filename)
+
+            # Create the "backups" folder if it doesn't exist
+            if not os.path.exists(backup_folder):
+                os.makedirs(backup_folder)
+
+            # Copy the file to the "backups" folder with the new filename
+            shutil.copy(original_filepath, backup_filepath)
+
+            await ctx.response.send_message(f"Backup created successfully: `{backup_filepath}`")
+        except FileNotFoundError:
+            await ctx.response.send_message(f"File not found: `{filename}`")
+        except Exception as e:
+            await ctx.response.send_message(f"An error occurred: {e}")
+    else:
+        await ctx.response.send_message("Only papa can use this command!")
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
