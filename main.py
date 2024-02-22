@@ -265,7 +265,6 @@ def user_exists(user_id):
     # Check if the user ID exists in the "users" array
     return any(user['ID'] == user_id for user in users)
 
-
 # Commands Issued Counter
 def commands_issued(user_id):
     # Opening JSON file
@@ -1697,6 +1696,37 @@ async def backup(ctx: discord.Interaction, filename: str):
             await ctx.response.send_message(f"Backup created successfully: `{backup_filepath}`")
         except FileNotFoundError:
             await ctx.response.send_message(f"File not found: `{filename}`")
+        except Exception as e:
+            await ctx.response.send_message(f"An error occurred: {e}")
+    else:
+        await ctx.response.send_message("Only papa can use this command!")
+
+
+# Files Command
+@client.tree.command(name="files", description="View Project IRIS files")
+async def files(ctx: discord.Interaction):
+    if ctx.user.id in ownerID:
+        commands_issued(ctx.user.id)
+        try:
+            script_directory = os.path.dirname(os.path.abspath(__file__))
+            items = os.listdir(script_directory)
+
+            embed = discord.Embed(title=f"{script_directory}", color=discord.Color.dark_red())
+
+            for item in items:
+                item_path = os.path.join(script_directory, item)
+
+                if os.path.isfile(item_path):
+                    # For files, display their size
+                    file_size = os.path.getsize(item_path)
+                    embed.add_field(name=f"{item}", value=f"`{file_size} bytes`", inline=True)
+                elif os.path.isdir(item_path):
+                    # For folders, calculate total size of all files within the folder
+                    folder_size = sum(os.path.getsize(os.path.join(item_path, f)) for f in os.listdir(item_path) if os.path.isfile(os.path.join(item_path, f)))
+                    file_count = sum(1 for _ in os.listdir(item_path) if os.path.isfile(os.path.join(item_path, _)))
+                    embed.add_field(name=f"{item} ({file_count} files)", value=f"`{folder_size} bytes`", inline=True)
+
+            await ctx.response.send_message(embed=embed)
         except Exception as e:
             await ctx.response.send_message(f"An error occurred: {e}")
     else:
