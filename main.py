@@ -1733,6 +1733,44 @@ async def files(ctx: discord.Interaction):
         await ctx.response.send_message("Only papa can use this command!")
 
 
+# Leaderboard Command
+@client.tree.command(name="leaderboard", description="View the leaderboard")
+async def leaderboard(ctx: discord.Interaction):
+    commands_issued(ctx.user.id)
+    # Load user data from profiles.json
+    with open("profiles.json", "r") as file:
+        user_data = json.load(file)["users"]
+
+    # Filter out bot accounts
+    user_data = [user for user in user_data if (client.get_user(user["ID"]) is not None) and (not client.get_user(user["ID"]).bot)]
+
+    # Initialize sorted_users with an empty list
+    sorted_users = []
+
+    try:
+        # Sort users based on the sum of wallet and bank balances
+        sorted_users = sorted(user_data, key=lambda x: int(x["wallet"]) + int(x["bank"]), reverse=True)[:10]
+    except ValueError as e:
+        print(f"Error: {e}")
+        # Handle the error, e.g., log it, send an error message, or set a default value
+
+    # Create an embed to display the leaderboard
+    embed = discord.Embed(title="RixCoin Leaderboard", color=discord.Colour.dark_red())
+
+    for rank, user in enumerate(sorted_users, start=1):
+        user_id = user["ID"]
+        user_obj = client.get_user(user_id)
+        if user_obj:
+            total_balance = int(user["wallet"]) + int(user["bank"])
+            embed.add_field(
+                name=f"#{rank} {user_obj.name}",
+                value=f"**{total_balance}**",
+                inline=False
+            )
+
+    await ctx.response.send_message(embed=embed)
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
