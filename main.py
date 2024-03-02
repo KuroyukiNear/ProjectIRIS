@@ -1771,6 +1771,18 @@ async def leaderboard(ctx: discord.Interaction):
     await ctx.response.send_message(embed=embed)
 
 
+# [CONSOLE] Get User Command
+@client.tree.command(name="getuser", description="View a user's info", guild=discord.Object(id=952892062552981526))
+async def getuser(ctx: discord.Interaction, user_id: str):
+    user_id = int(user_id)
+    user = client.get_user(user_id)
+    embed = discord.Embed(title=f"{user}", color=discord.Color.dark_red())
+    embed.add_field(name=f"User ID", value=f"{user_id}", inline=False)
+    embed.add_field(name=f"Created At", value=f"{user.created_at}", inline=False)
+    embed.timestamp = ctx.created_at
+    await ctx.response.send_message(embed=embed)
+
+
 # Connect
 load_dotenv()
 token = os.getenv('TOKEN')
