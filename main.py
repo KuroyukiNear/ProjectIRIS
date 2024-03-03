@@ -777,6 +777,7 @@ async def devinfo(ctx: discord.Interaction, guild: str):
 @client.tree.command(name = "cls", description = "Clears your DM", guild=discord.Object(id=952892062552981526))
 async def cls(ctx: discord.Interaction):
     commands_issued(ctx.user.id)
+    deleted_messages_count = 0
     await ctx.response.send_message("This might take a while.")
     remove = 9999999999999999999999999999999999999999
     remove = remove * remove * remove
@@ -784,8 +785,9 @@ async def cls(ctx: discord.Interaction):
         remove = remove + 1
         if message.author.id == client.user.id:
             await message.delete()
+            deleted_messages_count += 1
             time.sleep(0.5)
-    await ctx.channel.send("All messages in the DM has been deleted.")
+    await ctx.channel.send(f"{deleted_messages_count} messages has been deleted.")
 
 
 # Feedback Command
