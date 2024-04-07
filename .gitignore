@@ -1,4 +1,2 @@
-.env
+.token
 *.txt
-*.json
-Changelog.md

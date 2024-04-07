@@ -34,7 +34,6 @@ import traceback
 from pathlib import Path
 from itertools import cycle
 from datetime import datetime
-from dotenv import load_dotenv
 from io import StringIO, BytesIO
 
 
@@ -580,7 +579,8 @@ async def choose(ctx: discord.Interaction, choice1: str, choice2: str):
 @client.tree.command(name = "ping", description = "Checks Iris' latency.")
 async def ping(ctx):
     commands_issued(ctx.user.id)
-    await ctx.response.send_message(f"{round(client.latency * 1000)}ms")
+    latency = round(client.latency * 1000)
+    await ctx.response.send_message(f"{latency}ms")
 
 
 # User Status Count
@@ -620,7 +620,7 @@ async def join(ctx: discord.Interaction):
     commands_issued(ctx.user.id)
     channel = ctx.user.voice.channel
     await channel.connect()
-    await ctx.response.send_message("Connected")
+    await ctx.response.send_message("Connected to {channel.mention}")
 
 
 # Leave Voice
@@ -628,7 +628,7 @@ async def join(ctx: discord.Interaction):
 async def leave(ctx: discord.Interaction):
     commands_issued(ctx.user.id)
     await ctx.guild.voice_client.disconnect()
-    await ctx.response.send_message("Disconnected")
+    await ctx.response.send_message("Disconnected from {channel.mention}")
 
 
 # [Console] Say Command
@@ -945,13 +945,11 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
                 rix = f"`{wrix + brix}`"
 
         # Embed Profile
-        info = discord.Embed(title=f"{username}'s Profile",
+        info = discord.Embed(title=f"{username}'s Balance",
                             description=f"Networth: `{rix}`RC",
                             colour=discord.Colour.dark_red())
         info.add_field(name="Wallet", value=f"`{wrix}`RC", inline=True)
-        info.add_field(name="Bank",
-                    value=f"`{brix}`RC",
-                    inline=True)
+        info.add_field(name="Bank", value=f"`{brix}`RC", inline=True)
         await ctx.response.send_message(embed=info)
 
     # Reply if user does not exist
@@ -961,7 +959,7 @@ async def profile(ctx: discord.Interaction, member: discord.Member = None):
 
 # Transfer RixCoins
 @client.tree.command(name = "transfer", description = "Transfer RixCoins to another user")
-async def profile(ctx: discord.Interaction, member: discord.Member, amount: int):
+async def transfer(ctx: discord.Interaction, member: discord.Member, amount: int):
     commands_issued(ctx.user.id)
     # Opening JSON file
     userjson = open("profiles.json")
@@ -1785,10 +1783,27 @@ async def getuser(ctx: discord.Interaction, user_id: str):
     await ctx.response.send_message(embed=embed)
 
 
-# Connect
-load_dotenv()
-token = os.getenv('TOKEN')
-client.run(token)
+# Token
+## Get Token
+def get_token():
+    with open(".token", "r") as f:
+        while True:
+            try:
+                token = f.readline()
+                if token[0] == "#":
+                    continue
+                else:
+                    return token
+            except:
+                print("ERROR - token not found")
+                return 0
+
+
+## Run Program
+if __name__ == "__main__":
+    token = get_token()
+    print(token)
+    client.run(token)
 
 '''
 <-> DEV LOG <->

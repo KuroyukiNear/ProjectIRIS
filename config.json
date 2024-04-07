@@ -1,0 +1,31 @@
+{
+    "channel_id": {
+        "user_join": 0,
+        "deleted_message": 0,
+        "edited_message": 0,
+        "voice_events": 0,
+        "watched_message": 0,
+        "feedback_channel": 0,
+        "report_channel": 0,
+        "file_logger": 0
+    },
+    "log_settings": {
+        "user_join": true,
+        "deleted_message": true,
+        "edited_message": true,
+        "watched_message": true,
+        "voice_events": true,
+        "file_log_extension": [
+            "txt",
+            "jpg",
+            "jpeg",
+            "png",
+            "gif",
+            "bmp",
+            "tiff",
+            "tif",
+            "webp",
+            "svg"
+        ]
+    }
+}
